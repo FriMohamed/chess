@@ -1,53 +1,55 @@
 package game
 
-import (
-	"sync"
-)
+import "sync"
 
 type Manager struct {
-	mu    sync.Mutex
-	rooms map[string]*GameRoom
+	mu    sync.RWMutex
+	rooms map[string]*Room
 }
 
 func NewManager() *Manager {
 	return &Manager{
-		rooms: make(map[string]*GameRoom),
+		rooms: make(map[string]*Room),
 	}
 }
 
-func (m *Manager) QuickGame(player *Player) *GameRoom {
+func (m *Manager) QuickGame(player *Player) *Room {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	for _, r := range m.rooms {
-		if r.Game.AddPlayer(player) {
-			r.startPlayerTimer(player)
-			return r
+	for _, room := range m.rooms {
+		if room.IsFull() {
+			continue
+		}
+
+		if room.AddPlayer(player) {
+			return room
 		}
 	}
 
 	game := NewGame(player)
-
-	room := NewGameRoom(game, func() {
-		m.RemoveRoom(game.ID)
-	})
+	room := NewRoom(game)
 
 	m.rooms[game.ID] = room
-	room.startPlayerTimer(player)
 
 	return room
 }
 
-func (m *Manager) GetRoom(id string) *GameRoom {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (m *Manager) GetRoom(gameID string) *Room {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
-	return m.rooms[id]
+	return m.rooms[gameID]
 }
 
-func (m *Manager) RemoveRoom(id string) {
+func (m *Manager) RemoveRoom(gameID string) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	delete(m.rooms, id)
+	if _, exists := m.rooms[gameID]; !exists {
+		return false
+	}
+
+	delete(m.rooms, gameID)
+	return true
 }

@@ -1,6 +1,8 @@
 package game
 
 import (
+	"errors"
+
 	"github.com/corentings/chess"
 	"github.com/google/uuid"
 )
@@ -11,6 +13,13 @@ const (
 	Waiting  GameStatus = "waiting"
 	Playing  GameStatus = "playing"
 	Finished GameStatus = "finished"
+)
+
+var (
+	ErrPlayerNotFound = errors.New("player not found")
+	ErrGameNotStarted = errors.New("game not started")
+	ErrNotYourTurn    = errors.New("not your turn")
+	ErrInvalidMove    = errors.New("invalid move")
 )
 
 type Game struct {
@@ -65,7 +74,33 @@ func (g *Game) RemovePlayer(id string) bool {
 	return false
 }
 
-func (g *Game) isEmpty() bool {
+func (g *Game) Move(player *Player, from, to string) error {
+	if g.Status != Playing {
+		return ErrGameNotStarted
+	}
+
+	if !g.IsFull() {
+		return ErrGameNotStarted
+	}
+
+	turn := g.Chess.Position().Turn()
+
+	if g.White.ID == player.ID && turn != chess.White {
+		return ErrNotYourTurn
+	}
+
+	if g.Black.ID == player.ID && turn != chess.Black {
+		return ErrNotYourTurn
+	}
+
+	if err := g.Chess.MoveStr(from + to); err != nil {
+		return ErrInvalidMove
+	}
+
+	return nil
+}
+
+func (g *Game) IsEmpty() bool {
 	return g.White == nil && g.Black == nil
 }
 
