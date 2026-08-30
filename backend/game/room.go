@@ -1,15 +1,26 @@
 package game
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
+
+const connectionTimeout = 30 * time.Second
 
 type Room struct {
-	mu   sync.Mutex
+	mu sync.Mutex
+
 	Game *Game
+
+	connected map[string]bool
+	timers    map[string]*time.Timer
 }
 
 func NewRoom(game *Game) *Room {
 	return &Room{
-		Game: game,
+		Game:      game,
+		connected: make(map[string]bool),
+		timers:    make(map[string]*time.Timer),
 	}
 }
 
@@ -17,14 +28,8 @@ func (r *Room) AddPlayer(player *Player) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	
 	return r.Game.AddPlayer(player)
-}
-
-func (r *Room) RemovePlayer(playerID string) bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	return r.Game.RemovePlayer(playerID)
 }
 
 func (r *Room) Player(playerID string) *Player {
@@ -38,19 +43,11 @@ func (r *Room) Start() bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if !r.Game.IsFull() {
-		return false
-	}
-
-	if r.Game.Status != Waiting {
-		return false
-	}
-
-	r.Game.Status = Playing
+	r.Game.Start()
 	return true
 }
 
-func (r *Room) Move(playerID, from, to string) error {
+func (r *Room) Move(playerID, notation string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -59,24 +56,14 @@ func (r *Room) Move(playerID, from, to string) error {
 		return ErrPlayerNotFound
 	}
 
-	return r.Game.Move(player, from, to)
+	return r.Game.Move(player, notation)
 }
 
-func (r *Room) Players() []*Player {
+func (r *Room) Players() [2]*Player {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
-	players := make([]*Player, 0, 2)
 
-	if r.Game.White != nil {
-		players = append(players, r.Game.White)
-	}
-
-	if r.Game.Black != nil {
-		players = append(players, r.Game.Black)
-	}
-
-	return players
+	return r.Game.Players
 }
 
 func (r *Room) IsEmpty() bool {
@@ -94,5 +81,54 @@ func (r *Room) IsFull() bool {
 }
 
 func (r *Room) GameID() string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.Game.ID
+}
+
+func (r *Room) StartConnectionTimer(playerID string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if timer, ok := r.timers[playerID]; ok {
+		timer.Stop()
+	}
+
+	r.timers[playerID] = time.AfterFunc(
+		connectionTimeout,
+		func() {
+			r.connectionTimeout(playerID)
+		},
+	)
+}
+
+func (r *Room) PlayerConnected(playerID string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.connected[playerID] = true
+
+	if timer, ok := r.timers[playerID]; ok {
+		timer.Stop()
+		delete(r.timers, playerID)
+	}
+	println("Player", playerID, "re/connected. Stopping connection timer.")
+}
+
+func (r *Room) PlayerDisconnected(playerID string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	delete(r.connected, playerID)
+	println("Player", playerID, "disconnected.")
+}
+
+func (r *Room) connectionTimeout(playerID string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	delete(r.timers, playerID)
+	println("Player", playerID, "connection timeout. Removing from game.")
+	r.Game.RemovePlayer(playerID)
 }

@@ -30,8 +30,9 @@ type Message struct {
 }
 
 type MoveCommand struct {
-	From string `json:"from"`
-	To   string `json:"to"`
+	From      string `json:"from"`
+	To        string `json:"to"`
+	Promotion string `json:"promotion,omitempty"`
 }
 
 type ErrorCode string
@@ -53,4 +54,7 @@ type GameState struct {
 	White  *game.Player `json:"white"`
 	Black  *game.Player `json:"black"`
 	FEN    string       `json:"fen"`
+	WhiteTime  int64           `json:"whiteTime"`
+	BlackTime  int64           `json:"blackTime"`
+	Active     int             `json:"active"`
 }

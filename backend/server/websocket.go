@@ -40,25 +40,11 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	client := NewClient(player, conn)
 
 	s.addClient(client)
-
-	// started := room.Start()
+	room.PlayerConnected(playerID)
 
 	if len(s.roomClients(room)) == 2 && room.Start() {
 		s.broadcastState(room, MessageGameStarted)
 	}
-
-	// println(
-	// 	"websocket:",
-	// 	client.Player.ID,
-	// 	"connected, game:",
-	// 	room.GameID(),
-	// 	"started:",
-	// 	started,
-	// )
-
-	// if started {
-	// 	s.broadcastState(room, MessageGameStarted)
-	// }
 
 	s.readClient(room, client)
 }
@@ -66,6 +52,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 func (s *Server) readClient(room *game.Room, client *Client) {
 	defer func() {
 		s.removeClient(client.Player.ID)
+		room.PlayerDisconnected(client.Player.ID)
 		client.Close()
 	}()
 
@@ -124,11 +111,8 @@ func (s *Server) handleMove(
 		return
 	}
 
-	err := room.Move(
-		client.Player.ID,
-		command.From,
-		command.To,
-	)
+	notation := command.From + command.To + command.Promotion
+	err := room.Move(client.Player.ID, notation)
 
 	if err != nil {
 		s.sendGameError(client, err)
@@ -180,6 +164,10 @@ func (s *Server) roomClients(room *game.Room) []*Client {
 	clients := make([]*Client, 0, len(players))
 
 	for _, player := range players {
+		if player == nil {
+			continue
+		}
+
 		if client := s.clients[player.ID]; client != nil {
 			clients = append(clients, client)
 		}
@@ -193,10 +181,13 @@ func (s *Server) broadcastState(
 	messageType MessageType,
 ) {
 	state := GameState{
-		GameID: room.Game.ID,
-		White:  room.Game.White,
-		Black:  room.Game.Black,
-		FEN:    room.Game.Chess.Position().String(),
+		GameID:    room.Game.ID,
+		White:     room.Game.White(),
+		Black:     room.Game.Black(),
+		FEN:       room.Game.Chess.Position().String(),
+		WhiteTime: room.Game.Clock.TimeLeft[game.White].Milliseconds(),
+		BlackTime: room.Game.Clock.TimeLeft[game.Black].Milliseconds(),
+		Active:    room.Game.Clock.Active,
 	}
 
 	data, err := json.Marshal(state)
@@ -211,13 +202,6 @@ func (s *Server) broadcastState(
 	}
 
 	clients := s.roomClients(room)
-
-	// println(
-	// 	"broadcast:",
-	// 	len(clients),
-	// 	"clients, message:",
-	// 	string(messageType),
-	// )
 
 	for _, client := range clients {
 		if err := client.Send(message); err != nil {

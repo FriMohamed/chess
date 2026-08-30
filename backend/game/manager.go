@@ -18,19 +18,19 @@ func (m *Manager) QuickGame(player *Player) *Room {
 	defer m.mu.Unlock()
 
 	for _, room := range m.rooms {
-		if room.IsFull() {
-			continue
-		}
-
 		if room.AddPlayer(player) {
+			room.StartConnectionTimer(player.ID)
 			return room
 		}
 	}
 
 	game := NewGame(player)
+
 	room := NewRoom(game)
 
 	m.rooms[game.ID] = room
+
+	room.StartConnectionTimer(player.ID)
 
 	return room
 }

@@ -2,6 +2,7 @@ package game
 
 import (
 	"errors"
+	"math/rand"
 
 	"github.com/corentings/chess"
 	"github.com/google/uuid"
@@ -22,59 +23,89 @@ var (
 	ErrInvalidMove    = errors.New("invalid move")
 )
 
+
+
 type Game struct {
-	ID     string
-	White  *Player
-	Black  *Player
-	Status GameStatus
-	Chess  *chess.Game
+	ID         string
+	Players    [2]*Player
+	WhiteIndex int
+	Status     GameStatus
+	Chess      *chess.Game
+	Clock      *GameClock
 }
 
 func NewGame(player *Player) *Game {
 	return &Game{
-		ID:     uuid.NewString(),
-		White:  player,
-		Status: Waiting,
-		Chess:  chess.NewGame(),
+		ID:      uuid.NewString(),
+		Players: [2]*Player{player, nil},
+		Status:  Waiting,
+		Chess:   chess.NewGame(),
 	}
 }
 
 func (g *Game) AddPlayer(player *Player) bool {
-	if g.Black != nil {
-		return false
+	for i := range g.Players {
+		if g.Players[i] == nil {
+			g.Players[i] = player
+			return true
+		}
 	}
 
-	g.Black = player
-	return true
+	return false
 }
 
 func (g *Game) GetPlayer(id string) *Player {
-	if g.White != nil && g.White.ID == id {
-		return g.White
-	}
-
-	if g.Black != nil && g.Black.ID == id {
-		return g.Black
+	for _, player := range g.Players {
+		if player != nil && player.ID == id {
+			return player
+		}
 	}
 
 	return nil
 }
 
 func (g *Game) RemovePlayer(id string) bool {
-	if g.White != nil && g.White.ID == id {
-		g.White = nil
-		return true
-	}
-
-	if g.Black != nil && g.Black.ID == id {
-		g.Black = nil
-		return true
+	for i, player := range g.Players {
+		if player != nil && player.ID == id {
+			g.Players[i] = nil
+			return true
+		}
 	}
 
 	return false
 }
 
-func (g *Game) Move(player *Player, from, to string) error {
+func (g *Game) Start() bool {
+	if g.Status != Waiting || !g.IsFull() {
+		return false
+	}
+
+	g.WhiteIndex = rand.Intn(2)
+	g.Clock = newGameClock()
+	g.Status = Playing
+
+	return true
+}
+
+
+
+func (g *Game) White() *Player {
+	if !g.IsFull() {
+		return nil
+	}
+
+	return g.Players[g.WhiteIndex]
+}
+
+func (g *Game) Black() *Player {
+	if !g.IsFull() {
+		return nil
+	}
+
+	return g.Players[1-g.WhiteIndex]
+}
+
+func (g *Game) Move(player *Player, notation string) error {
 	if g.Status != Playing {
 		return ErrGameNotStarted
 	}
@@ -85,25 +116,27 @@ func (g *Game) Move(player *Player, from, to string) error {
 
 	turn := g.Chess.Position().Turn()
 
-	if g.White.ID == player.ID && turn != chess.White {
+	if g.White().ID == player.ID && turn != chess.White {
 		return ErrNotYourTurn
 	}
 
-	if g.Black.ID == player.ID && turn != chess.Black {
+	if g.Black().ID == player.ID && turn != chess.Black {
 		return ErrNotYourTurn
 	}
 
-	if err := g.Chess.MoveStr(from + to); err != nil {
+	if err := g.Chess.MoveStr(notation); err != nil {
 		return ErrInvalidMove
 	}
+
+	g.Clock.updateClock()
 
 	return nil
 }
 
 func (g *Game) IsEmpty() bool {
-	return g.White == nil && g.Black == nil
+	return g.Players[0] == nil && g.Players[1] == nil
 }
 
 func (g *Game) IsFull() bool {
-	return g.White != nil && g.Black != nil
+	return g.Players[0] != nil && g.Players[1] != nil
 }
