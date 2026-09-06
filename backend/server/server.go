@@ -24,6 +24,7 @@
 	func (s *Server) Handler() http.Handler {
 		mux := http.NewServeMux()
 
+		mux.HandleFunc("GET /games", s.openGames)
 		mux.HandleFunc("POST /games/quick", s.quickGame)
 		mux.HandleFunc("GET /games/{gameID}/ws", s.gameWebSocket)
 

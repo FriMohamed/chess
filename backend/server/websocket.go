@@ -35,7 +35,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
-	}
+	}	
 
 	client := NewClient(player, conn)
 

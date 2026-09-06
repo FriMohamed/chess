@@ -35,6 +35,21 @@ func (m *Manager) QuickGame(player *Player) *Room {
 	return room
 }
 
+func (m *Manager) OpenGames() []*Game {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	games := make([]*Game, 0)
+
+	for _, room := range m.rooms {
+		// if room.IsOpen() {
+			games = append(games, room.Game)
+		// }
+	}
+
+	return games
+}
+
 func (m *Manager) GetRoom(gameID string) *Room {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

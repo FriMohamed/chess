@@ -28,7 +28,6 @@ func (r *Room) AddPlayer(player *Player) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	
 	return r.Game.AddPlayer(player)
 }
 
@@ -122,6 +121,12 @@ func (r *Room) PlayerDisconnected(playerID string) {
 
 	delete(r.connected, playerID)
 	println("Player", playerID, "disconnected.")
+	r.timers[playerID] = time.AfterFunc(
+		connectionTimeout,
+		func() {
+			r.connectionTimeout(playerID)
+		},
+	)
 }
 
 func (r *Room) connectionTimeout(playerID string) {

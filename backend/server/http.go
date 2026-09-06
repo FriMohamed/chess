@@ -37,3 +37,13 @@ func (s *Server) quickGame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+func (s *Server) openGames(w http.ResponseWriter, r *http.Request) {
+    games := s.manager.OpenGames()
+
+    w.Header().Set("Content-Type", "application/json")
+
+    json.NewEncoder(w).Encode(games)
+}
+
+
