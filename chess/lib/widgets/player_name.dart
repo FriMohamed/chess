@@ -1,6 +1,5 @@
 import 'package:chess/services/player_name_service.dart';
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 class PlayerName extends StatefulWidget {
   const PlayerName({super.key});
@@ -14,19 +13,26 @@ class _PlayerNameState extends State<PlayerName> {
   String _playerName = '';
 
   late final TextEditingController _controller;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
 
     _controller = TextEditingController();
+    _focusNode = FocusNode();
+
+    _focusNode.addListener(_handleFocusChange);
 
     _loadName();
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
+    _focusNode.dispose();
     _controller.dispose();
+
     super.dispose();
   }
 
@@ -40,11 +46,19 @@ class _PlayerNameState extends State<PlayerName> {
     });
   }
 
+  void _handleFocusChange() {
+    if (!_focusNode.hasFocus && _isEditing) {
+      _saveName();
+    }
+  }
+
   Future<void> _saveName() async {
     final newName = _controller.text.trim();
 
     if (newName.isEmpty || newName.length < 3) {
-      setState(() => _isEditing = false);
+      setState(() {
+        _isEditing = false;
+      });
       return;
     }
 
@@ -64,51 +78,36 @@ class _PlayerNameState extends State<PlayerName> {
     setState(() {
       _isEditing = true;
     });
+
+    _focusNode.requestFocus();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     if (_playerName.isEmpty) {
       return const SizedBox(
         height: 48,
-        child: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-            strokeWidth: 2,
-          ),
-        ),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
 
     if (_isEditing) {
-      return Container(
+      return ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 240),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.primary,
-            width: 1.5,
-          ),
-        ),
         child: TextField(
           controller: _controller,
+          focusNode: _focusNode,
           autofocus: true,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.text,
-            fontSize: 18,
+          style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
           decoration: const InputDecoration(
-            border: InputBorder.none,
             isDense: true,
-            contentPadding: EdgeInsets.symmetric(
-              vertical: AppSpacing.sm,
-            ),
+            contentPadding: EdgeInsets.symmetric(vertical: 8),
           ),
           onSubmitted: (_) => _saveName(),
         ),
@@ -118,33 +117,26 @@ class _PlayerNameState extends State<PlayerName> {
     return GestureDetector(
       onTap: _startEditing,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm + 4,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.border,
-          ),
+          border: Border.all(color: colors.outline),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               _playerName,
-              style: const TextStyle(
-                color: AppColors.text,
-                fontSize: 18,
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            const Icon(
+            const SizedBox(width: 8),
+            Icon(
               Icons.edit_outlined,
               size: 16,
-              color: AppColors.textSecondary,
+              color: colors.onSurface.withValues(alpha: 0.6),
             ),
           ],
         ),

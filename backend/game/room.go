@@ -137,3 +137,17 @@ func (r *Room) connectionTimeout(playerID string) {
 	println("Player", playerID, "connection timeout. Removing from game.")
 	r.Game.RemovePlayer(playerID)
 }
+
+func (r *Room) QuitGame(playerID string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+ 
+	if timer, ok := r.timers[playerID]; ok {
+		timer.Stop()
+		println("timer for ", playerID, "stoped")
+		delete(r.timers, playerID)
+	}
+
+	println("Player", playerID, "Removing from game.")
+	return r.Game.RemovePlayer(playerID)
+}

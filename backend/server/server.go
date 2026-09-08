@@ -26,6 +26,7 @@
 
 		mux.HandleFunc("GET /games", s.openGames)
 		mux.HandleFunc("POST /games/quick", s.quickGame)
+		mux.HandleFunc("DELETE /games/{gameId}/players/{playerId}", s.quitGame)
 		mux.HandleFunc("GET /games/{gameID}/ws", s.gameWebSocket)
 
 		return mux

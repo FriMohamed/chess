@@ -50,6 +50,22 @@ func (m *Manager) OpenGames() []*Game {
 	return games
 }
 
+func (m *Manager) RemovePlayer(gameID string, playerID string) bool {
+	m.mu.RLock()
+
+	room, exists := m.rooms[gameID]
+
+	m.mu.RUnlock()
+
+	if !exists {
+		return false
+	}
+
+	removed := room.QuitGame(playerID)
+
+	return removed
+}
+
 func (m *Manager) GetRoom(gameID string) *Room {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

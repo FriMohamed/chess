@@ -38,12 +38,37 @@ func (s *Server) quickGame(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (s *Server) openGames(w http.ResponseWriter, r *http.Request) {
-    games := s.manager.OpenGames()
+func (s *Server) quitGame(w http.ResponseWriter, r *http.Request) {
+	gameID := r.PathValue("gameId")
+	playerID := r.PathValue("playerId")
 
-    w.Header().Set("Content-Type", "application/json")
+	if gameID == "" || playerID == "" {
+		http.Error(
+			w,
+			"game_id and player_id are required",
+			http.StatusBadRequest,
+		)
+		return
+	}
 
-    json.NewEncoder(w).Encode(games)
+	removed := s.manager.RemovePlayer(gameID, playerID)
+
+	if !removed {
+		http.Error(
+			w,
+			"player or game not found",
+			http.StatusNotFound,
+		)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) openGames(w http.ResponseWriter, r *http.Request) {
+	games := s.manager.OpenGames()
 
+	w.Header().Set("Content-Type", "application/json")
+
+	json.NewEncoder(w).Encode(games)
+}

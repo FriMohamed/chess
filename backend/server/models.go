@@ -11,8 +11,8 @@ type quickGameRequest struct {
 }
 
 type quickGameResponse struct {
-	GameID   string `json:"gameId"`
-	PlayerID string `json:"playerId"`
+	GameID   string `json:"game_id"`
+	PlayerID string `json:"player_id"`
 }
 
 type MessageType string
@@ -50,11 +50,11 @@ type ErrorData struct {
 }
 
 type GameState struct {
-	GameID string       `json:"gameId"`
+	GameID string       `json:"game_id"`
 	White  *game.Player `json:"white"`
 	Black  *game.Player `json:"black"`
 	FEN    string       `json:"fen"`
-	WhiteTime  int64           `json:"whiteTime"`
-	BlackTime  int64           `json:"blackTime"`
+	WhiteTime  int64           `json:"white_time"`
+	BlackTime  int64           `json:"black_time"`
 	Active     int             `json:"active"`
 }

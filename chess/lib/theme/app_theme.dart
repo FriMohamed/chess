@@ -1,22 +1,93 @@
 import 'package:flutter/material.dart';
 
-class AppColors {
-  static const Color background = Color(0xFF0F1115);
-  static const Color surface = Color(0xFF181B21);
-  static const Color surfacePressed = Color(0xFF22262E);
-  static const Color primary = Color(0xFFD6A84F);
-  static const Color primaryPressed = Color(0xFFB88D3F);
-  static const Color text = Color(0xFFF5F5F5);
-  static const Color textSecondary = Color(0xFF9EA3AD);
-  static const Color error = Color(0xFFFF4D4F);
-  static const Color border = Color(0xFF2A2E36);
+class _AppColors {
+  static const Color background = Color(0xFF111315);
+
+  static const Color surface = Color(0xFF191C1F);
+
+  // static const Color surfaceElevated = Color(0xFF202428);
+
+  static const Color primary = Color(0xFFC9A96E);
+
+  // static const Color primaryPressed = Color(0xFFA98B5B);
+
+  static const Color text = Color(0xFFE8E5DE);
+
+  static const Color textSecondary = Color(0xFF9B9A95);
+
+  static const Color error = Color(0xFFD96B6B);
+
+  static const Color border = Color(0xFF2B2F32);
 }
 
-class AppSpacing {
-  static const double xs = 4.0;
-  static const double sm = 8.0;
-  static const double md = 16.0;
-  static const double lg = 24.0;
-  static const double xl = 32.0;
-  static const double xxl = 48.0;
+class AppTheme {
+  static ThemeData get dark {
+    return ThemeData(
+      brightness: Brightness.dark,
+
+      scaffoldBackgroundColor: _AppColors.background,
+
+      colorScheme: const ColorScheme.dark(
+        primary: _AppColors.primary,
+        surface: _AppColors.surface,
+        error: _AppColors.error,
+        onPrimary: _AppColors.background,
+        onSurface: _AppColors.text,
+      ),
+
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(
+          color: _AppColors.text,
+        ),
+        bodyMedium: TextStyle(
+          color: _AppColors.text,
+        ),
+        bodySmall: TextStyle(
+          color: _AppColors.textSecondary,
+        ),
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _AppColors.primary,
+          foregroundColor: _AppColors.background,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(14),
+            ),
+          ),
+        ),
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: _AppColors.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(
+            Radius.circular(12),
+          ),
+          borderSide: BorderSide(
+            color: _AppColors.border,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(
+            Radius.circular(12),
+          ),
+          borderSide: BorderSide(
+            color: _AppColors.border,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(
+            Radius.circular(12),
+          ),
+          borderSide: BorderSide(
+            color: _AppColors.primary,
+          ),
+        ),
+      ),
+    );
+  }
 }

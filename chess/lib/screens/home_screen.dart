@@ -1,7 +1,6 @@
 import 'package:chess/widgets/custom_button.dart';
 import 'package:chess/widgets/player_name.dart';
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -16,80 +15,70 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.xl,
-          ),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Header Section
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.xl),
-                child: Column(
-                  children: const [
-                    Text(
-                      '♟',
-                      style: TextStyle(
-                        fontSize: 72,
-                        color: AppColors.primary,
-                        height: 1.0,
-                      ),
-                    ),
-                    SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'CHESS',
-                      style: TextStyle(
-                        color: AppColors.text,
-                        fontSize: 36,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 6,
-                      ),
-                    ),
-                    SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Play. Think. Win.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 32),
+              Text(
+                '♔',
+                style: TextStyle(
+                  fontSize: 72,
+                  color: colors.primary,
+                  height: 1.0,
                 ),
               ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                'CHESS',
+                style: theme.textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 6,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text('Play. Think. Win.', style: theme.textTheme.bodyMedium),
+
+              const SizedBox(height: 48),
 
               const PlayerName(),
 
-              // Actions Section
-              Padding(
-                padding: const EdgeInsets.only(bottom: 1.5 * AppSpacing.xxl),
-                child: Column(
-                  children: [
-                    // Primary Button
-                    CustomButton(
-                      label: 'QUICK GAME',
-                      backgroundColor: AppColors.primary,
-                      textColor: AppColors.background,
-                      fontWeight: FontWeight.w800,
-                      onPressed: () => _handleQuickGame(context),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    // Secondary Button
-                    CustomButton(
-                      label: 'PLAY A FRIEND',
-                      backgroundColor: AppColors.surface,
-                      textColor: AppColors.text,
-                      borderColor: AppColors.border,
-                      fontWeight: FontWeight.w700,
-                      onPressed: _handlePlayFriend,
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 140),
+
+              Column(
+                children: [
+                  CustomButton(
+                    label: 'QUICK GAME',
+                    backgroundColor: colors.primary,
+                    textColor: colors.onPrimary,
+                    fontWeight: FontWeight.w800,
+                    onPressed: () => _handleQuickGame(context),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  CustomButton(
+                    label: 'PRIVATE',
+                    backgroundColor: colors.surface,
+                    textColor: colors.onSurface,
+                    borderColor: colors.outline,
+                    fontWeight: FontWeight.w700,
+                    onPressed: _handlePlayFriend,
+                  ),
+                ],
               ),
+
+              const SizedBox(height: 48),
             ],
           ),
         ),
