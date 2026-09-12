@@ -50,11 +50,16 @@ type ErrorData struct {
 }
 
 type GameState struct {
-	GameID string       `json:"game_id"`
-	White  *game.Player `json:"white"`
-	Black  *game.Player `json:"black"`
-	FEN    string       `json:"fen"`
-	WhiteTime  int64           `json:"white_time"`
-	BlackTime  int64           `json:"black_time"`
-	Active     int             `json:"active"`
+	GameID     string           `json:"game_id"`
+	White      *game.Player     `json:"white"`
+	Black      *game.Player     `json:"black"`
+	FEN        string           `json:"fen"`
+	WhiteTime  int64            `json:"white_time"`
+	BlackTime  int64            `json:"black_time"`
+	Active     game.ActiveColor `json:"active"`
+
+	Status     game.GameStatus  `json:"status"`
+	Result     game.GameResult  `json:"result"`
+	EndReason  game.EndReason   `json:"end_reason"`
+	Check      bool             `json:"check"`
 }

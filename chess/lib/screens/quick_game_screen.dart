@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:chess/models/game_state.dart';
+import 'package:chess/screens/game_screen.dart';
 import 'package:chess/services/api/game_api_service.dart';
 import 'package:chess/services/game_socket_service.dart';
 import 'package:chess/services/player_name_service.dart';
@@ -20,6 +21,8 @@ class QuickGameScreen extends StatefulWidget {
 
 class _QuickGameScreenState extends State<QuickGameScreen> {
   QuickGameState _state = QuickGameState.searching;
+
+  Timer? _transitionTimer;
 
   GameState? _game;
   String _errorMessage = '';
@@ -58,11 +61,15 @@ class _QuickGameScreenState extends State<QuickGameScreen> {
         _state = QuickGameState.opponentFound;
       });
 
-      // Later:
-      // Navigator.of(context).pushReplacementNamed(
-      //   '/game',
-      //   arguments: ...
-      // );
+      _transitionTimer = Timer(const Duration(milliseconds: 500), () {
+        if (!mounted || _game == null || _playerId == null) return;
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => GameScreen(game: _game!, playerId: _playerId!),
+          ),
+        );
+      });
     }
 
     if (message is InvalidMessage) {
@@ -155,6 +162,7 @@ class _QuickGameScreenState extends State<QuickGameScreen> {
 
   @override
   void dispose() {
+    _transitionTimer?.cancel();
     _socketSubscription?.cancel();
     _socketErrorSubscription?.cancel();
 

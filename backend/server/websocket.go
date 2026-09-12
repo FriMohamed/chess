@@ -35,7 +35,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
-	}	
+	}
 
 	client := NewClient(player, conn)
 
@@ -184,10 +184,15 @@ func (s *Server) broadcastState(
 		GameID:    room.Game.ID,
 		White:     room.Game.White(),
 		Black:     room.Game.Black(),
-		FEN:       room.Game.Chess.Position().String(),
+		FEN:       room.Game.Chess.FEN(),
 		WhiteTime: room.Game.Clock.TimeLeft[game.White].Milliseconds(),
 		BlackTime: room.Game.Clock.TimeLeft[game.Black].Milliseconds(),
 		Active:    room.Game.Clock.Active,
+
+		Status:    room.Game.Status,
+		Result:    room.Game.Result,
+		EndReason: room.Game.EndReason,
+		Check:     room.Game.Check,
 	}
 
 	data, err := json.Marshal(state)

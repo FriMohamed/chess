@@ -23,23 +23,52 @@ var (
 	ErrInvalidMove    = errors.New("invalid move")
 )
 
+type GameResult string
 
+const (
+	NoResult  GameResult = "none"
+	WhiteWins GameResult = "white_wins"
+	BlackWins GameResult = "black_wins"
+	Draw      GameResult = "draw"
+)
+
+type EndReason string
+
+const (
+	NoEndReason          EndReason = "none"
+	Checkmate            EndReason = "checkmate"
+	Stalemate            EndReason = "stalemate"
+	ThreefoldRepetition  EndReason = "threefold_repetition"
+	FivefoldRepetition   EndReason = "fivefold_repetition"
+	FiftyMoveRule        EndReason = "fifty_move_rule"
+	SeventyFiveMoveRule  EndReason = "seventy_five_move_rule"
+	InsufficientMaterial EndReason = "insufficient_material"
+	Resignation          EndReason = "resignation"
+	Timeout              EndReason = "timeout"
+)
 
 type Game struct {
 	ID         string
 	Players    [2]*Player
 	WhiteIndex int
 	Status     GameStatus
-	Chess      *chess.Game
-	Clock      *GameClock
+	Result     GameResult
+	EndReason  EndReason
+	Check      bool
+
+	Chess *chess.Game
+	Clock *GameClock
 }
 
 func NewGame(player *Player) *Game {
 	return &Game{
-		ID:      uuid.NewString(),
-		Players: [2]*Player{player, nil},
-		Status:  Waiting,
-		Chess:   chess.NewGame(),
+		ID:        uuid.NewString(),
+		Players:   [2]*Player{player, nil},
+		Status:    Waiting,
+		Result:    NoResult,
+		EndReason: NoEndReason,
+		Check:     false,
+		Chess:     chess.NewGame(),
 	}
 }
 
@@ -87,8 +116,6 @@ func (g *Game) Start() bool {
 	return true
 }
 
-
-
 func (g *Game) White() *Player {
 	if !g.IsFull() {
 		return nil
@@ -129,8 +156,39 @@ func (g *Game) Move(player *Player, notation string) error {
 	}
 
 	g.Clock.updateClock()
+	g.updateGameState()
 
 	return nil
+}
+
+func (g *Game) updateGameState() {
+	g.Check = false
+
+	outcome := g.Chess.Outcome()
+
+	switch outcome {
+	case chess.WhiteWon:
+		g.Status = Finished
+		g.Result = WhiteWins
+
+	case chess.BlackWon:
+		g.Status = Finished
+		g.Result = BlackWins
+
+	case chess.Draw:
+		g.Status = Finished
+		g.Result = Draw
+
+	default:
+		g.Result = NoResult
+	}
+
+	if g.Status != Finished {
+		g.Check = g.Chess.Position().Status() == chess.Checkmate
+		return
+	}
+
+	g.EndReason = mapEndReason(g.Chess.Method())
 }
 
 func (g *Game) IsEmpty() bool {
@@ -139,4 +197,35 @@ func (g *Game) IsEmpty() bool {
 
 func (g *Game) IsFull() bool {
 	return g.Players[0] != nil && g.Players[1] != nil
+}
+
+func mapEndReason(method chess.Method) EndReason {
+	switch method {
+	case chess.Checkmate:
+		return Checkmate
+
+	case chess.Stalemate:
+		return Stalemate
+
+	case chess.ThreefoldRepetition:
+		return ThreefoldRepetition
+
+	case chess.FivefoldRepetition:
+		return FivefoldRepetition
+
+	case chess.FiftyMoveRule:
+		return FiftyMoveRule
+
+	case chess.SeventyFiveMoveRule:
+		return SeventyFiveMoveRule
+
+	case chess.InsufficientMaterial:
+		return InsufficientMaterial
+
+	case chess.Resignation:
+		return Resignation
+
+	default:
+		return NoEndReason
+	}
 }

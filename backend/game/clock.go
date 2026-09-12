@@ -2,14 +2,16 @@ package game
 
 import "time"
 
+type ActiveColor int
+
 const (
-	White = 0
-	Black = 1
+	White ActiveColor = 0
+	Black ActiveColor = 1
 )
 
 type GameClock struct {
 	TimeLeft   [2]time.Duration
-	Active     int
+	Active     ActiveColor
 	LastUpdate time.Time
 }
 

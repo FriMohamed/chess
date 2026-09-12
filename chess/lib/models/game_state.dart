@@ -1,5 +1,10 @@
 import 'player.dart';
 
+enum ActiveColor {
+  white,
+  black,
+}
+
 class GameState {
   final String gameId;
   final Player? white;
@@ -7,7 +12,7 @@ class GameState {
   final String fen;
   final int whiteTime;
   final int blackTime;
-  final int active;
+  final ActiveColor active;
 
   const GameState({
     required this.gameId,
@@ -27,10 +32,7 @@ class GameState {
       fen: json['fen'] as String,
       whiteTime: json['white_time'] as int,
       blackTime: json['black_time'] as int,
-      active: json['active'] as int,
+      active: (json['active'] as int) == 0 ? ActiveColor.black : ActiveColor.white,
     );
   }
-
-  bool get whiteToMove => active == 0;
-  bool get blackToMove => active == 1;
 }
