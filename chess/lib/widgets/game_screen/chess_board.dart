@@ -5,12 +5,14 @@ import 'package:chess/models/game_state.dart';
 class ChessBoard extends StatelessWidget {
   final GameState game;
   final String? selectedSquare;
+  final bool isWhite;
   final void Function(String) onSquareTap;
   final List<String> legalMoves;
 
   const ChessBoard({
     super.key,
     required this.game,
+    required this.isWhite,
     required this.selectedSquare,
     required this.legalMoves,
     required this.onSquareTap,
@@ -29,8 +31,11 @@ class ChessBoard extends StatelessWidget {
         ),
         itemCount: 64,
         itemBuilder: (context, index) {
-          final row = index ~/ 8;
-          final col = index % 8;
+          final visualRow = index ~/ 8;
+          final visualCol = index % 8;
+
+          final row = isWhite ? visualRow : 7 - visualRow;
+          final col = isWhite ? visualCol : 7 - visualCol;
 
           final piece = board[row][col];
           final isLight = (row + col).isEven;

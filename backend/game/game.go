@@ -2,6 +2,7 @@ package game
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 
 	"github.com/corentings/chess"
@@ -68,7 +69,7 @@ func NewGame(player *Player) *Game {
 		Result:    NoResult,
 		EndReason: NoEndReason,
 		Check:     false,
-		Chess:     chess.NewGame(),
+		Chess:     chess.NewGame(chess.UseNotation(chess.UCINotation{})),
 	}
 }
 
@@ -150,6 +151,8 @@ func (g *Game) Move(player *Player, notation string) error {
 	if g.Black().ID == player.ID && turn != chess.Black {
 		return ErrNotYourTurn
 	}
+
+	fmt.Printf("MOVE STRING RECEIVED: %q\n", notation)
 
 	if err := g.Chess.MoveStr(notation); err != nil {
 		return ErrInvalidMove

@@ -61,20 +61,24 @@ class _QuickGameScreenState extends State<QuickGameScreen> {
         _state = QuickGameState.opponentFound;
       });
 
-      _transitionTimer = Timer(const Duration(milliseconds: 500), () {
+      _transitionTimer = Timer(const Duration(milliseconds: 100), () {
         if (!mounted || _game == null || _playerId == null) return;
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => GameScreen(game: _game!, playerId: _playerId!),
+            builder: (_) => GameScreen(
+              game: _game!,
+              playerId: _playerId!,
+              socket: _socketService,
+            ),
           ),
         );
       });
     }
 
-    if (message is InvalidMessage) {
-      _setError('The server received an invalid message.');
-    }
+    // if (message is InvalidMessage) {
+    //   _setError('The server received an invalid message.');
+    // }
 
     if (message is UnknownMessage) {
       _setError('The server sent an unknown message.');
@@ -153,11 +157,22 @@ class _QuickGameScreenState extends State<QuickGameScreen> {
 
   Future<void> _confirmCancel() async {
     if (_gameId == null || _playerId == null) {
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
       return;
     }
 
     await GameApiService.quitGame(gameId: _gameId!, playerId: _playerId!);
+
+    if (!mounted) return;
+
+    setState(() {
+      _allowNavigation = true;
+      _showCancelModal = false;
+    });
+
+    Navigator.of(context).pop();
   }
 
   @override
@@ -165,8 +180,6 @@ class _QuickGameScreenState extends State<QuickGameScreen> {
     _transitionTimer?.cancel();
     _socketSubscription?.cancel();
     _socketErrorSubscription?.cancel();
-
-    _socketService.dispose();
 
     super.dispose();
   }

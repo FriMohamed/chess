@@ -34,7 +34,7 @@ class ChessSquare extends StatelessWidget {
           children: [
             if (piece != null)
               AnimatedScale(
-                scale: isSelected ? 1.25 : 1.0,
+                scale: isSelected ? 1.3 : 1.0,
                 duration: const Duration(milliseconds: 120),
                 curve: Curves.easeOut,
                 child: ChessPiece(type: piece!),
@@ -45,7 +45,12 @@ class ChessSquare extends StatelessWidget {
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.25),
+                  color: const Color.fromARGB(
+                    235,
+                    76,
+                    255,
+                    106,
+                  ).withValues(alpha: 0.25),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -55,5 +60,3 @@ class ChessSquare extends StatelessWidget {
     );
   }
 }
-
-//  carriere@amanyspharma.com

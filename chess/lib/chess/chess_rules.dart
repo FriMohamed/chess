@@ -1,32 +1,39 @@
 import 'package:dartchess/dartchess.dart';
 
 class ChessRules {
-  
   List<String> legalMoves(String fen, String from) {
-    final setup = Setup.parseFen(fen);
-    final position = Chess.fromSetup(setup);
+    var chess = Chess.fromSetup(Setup.parseFen(fen));
 
     final square = Square.fromName(from);
-    final moves = position.legalMovesOf(square);
+    final piece = chess.board.pieceAt(square);
 
-    if (moves == null) {
+    if (piece == null) {
       return [];
     }
 
-    return moves.squares.map((square) => square.name).toList();
+    if (piece.color != chess.turn) {
+      chess = chess.copyWith(turn: piece.color, epSquare: null) as Chess;
+    }
+
+    return chess
+        .legalMovesOf(square)
+        .squares
+        .map((square) => square.name)
+        .toList();
   }
 
-  String makeMove(String fen, String from, String to) {
+  bool isPromotionMove(String fen, String from) {
     final setup = Setup.parseFen(fen);
-    final position = Chess.fromSetup(setup);
+    final chess = Chess.fromSetup(setup);
 
-    final move = NormalMove(
-      from: Square.fromName(from),
-      to: Square.fromName(to),
-    );
+    final fromSquare = Square.fromName(from);
 
-    final newPosition = position.play(move);
+    if (!chess.board.pawns.has(fromSquare)) {
+      return false;
+    }
 
-    return newPosition.fen;
+    final promotionRank = chess.turn == Side.white ? 6 : 1;
+
+    return fromSquare.rank == promotionRank;
   }
 }

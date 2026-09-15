@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -205,6 +206,8 @@ func (s *Server) broadcastState(
 		Type: messageType,
 		Data: data,
 	}
+
+	fmt.Printf("GAME STATE CHANGED:\n%+v\n", state)
 
 	clients := s.roomClients(room)
 

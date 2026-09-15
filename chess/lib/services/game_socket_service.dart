@@ -21,8 +21,10 @@ class GameStateMessage extends GameSocketMessage {
   const GameStateMessage(this.game);
 }
 
-class InvalidMessage extends GameSocketMessage {
-  const InvalidMessage();
+class ErrorMessage extends GameSocketMessage {
+  final String message;
+
+  const ErrorMessage(this.message);
 }
 
 class UnknownMessage extends GameSocketMessage {
@@ -34,32 +36,54 @@ class GameSocketService {
 
   WebSocketChannel? _channel;
 
-  final StreamController<GameSocketMessage> _messageController =
+  final _messageController =
       StreamController<GameSocketMessage>.broadcast();
 
-  final StreamController<Object> _errorController =
+  final _errorController =
       StreamController<Object>.broadcast();
 
-  Stream<GameSocketMessage> get messages => _messageController.stream;
+  Stream<GameSocketMessage> get messages =>
+      _messageController.stream;
 
-  Stream<Object> get errors => _errorController.stream;
+  Stream<Object> get errors =>
+      _errorController.stream;
 
-  void connect({required String gameId, required String playerId}) {
+  void connect({
+    required String gameId,
+    required String playerId,
+  }) {
     close();
 
-    final uri = Uri.parse('$baseUrl/games/$gameId/ws?playerId=$playerId');
-
-    _channel = WebSocketChannel.connect(uri);
-
-    _channel!.stream.listen(
-      _handleMessage,
-      onError: (error) {
-        _errorController.add(error);
-      },
-      onDone: () {
-        // Connection closed.
-      },
+    final uri = Uri.parse(
+      '$baseUrl/games/$gameId/ws?playerId=$playerId',
     );
+
+    final channel = WebSocketChannel.connect(uri);
+
+    _channel = channel;
+
+    channel.stream.listen(
+      _handleMessage,
+      onError: _handleError,
+      onDone: _handleDone,
+    );
+  }
+
+  void sendMove({
+    required String from,
+    required String to,
+    String? promotion,
+  }) {
+    final message = {
+      'type': 'move',
+      'data': {
+        'from': from,
+        'to': to,
+        if (promotion != null) 'promotion': promotion,
+      },
+    };
+
+    _channel?.sink.add(jsonEncode(message));
   }
 
   void _handleMessage(dynamic rawMessage) {
@@ -71,23 +95,42 @@ class GameSocketService {
 
       switch (type) {
         case 'game_started':
-          _messageController.add(GameStartedMessage(GameState.fromJson(data)));
-          break;
+          _messageController.add(
+            GameStartedMessage(
+              GameState.fromJson(data),
+            ),
+          );
 
         case 'game_state':
-          _messageController.add(GameStateMessage(GameState.fromJson(data)));
-          break;
+          _messageController.add(
+            GameStateMessage(
+              GameState.fromJson(data),
+            ),
+          );
 
-        case 'invalid_message':
-          _messageController.add(const InvalidMessage());
-          break;
+        case 'error':
+          _messageController.add(
+            ErrorMessage(
+              data['message'] as String,
+            ),
+          );
 
         default:
-          _messageController.add(const UnknownMessage());
+          _messageController.add(
+            const UnknownMessage(),
+          );
       }
     } catch (error) {
       _errorController.add(error);
     }
+  }
+
+  void _handleError(Object error) {
+    _errorController.add(error);
+  }
+
+  void _handleDone() {
+    // Reconnection will be handled later.
   }
 
   void close() {

@@ -1,6 +1,9 @@
 import 'package:chess/cubits/game_cubit.dart';
 import 'package:chess/cubits/game_screen_state.dart';
+import 'package:chess/services/game_socket_service.dart';
 import 'package:chess/widgets/game_screen/chess_board.dart';
+import 'package:chess/widgets/game_screen/player_bar.dart';
+import 'package:chess/widgets/game_screen/promotion_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:chess/models/game_state.dart';
@@ -8,74 +11,80 @@ import 'package:chess/models/game_state.dart';
 class GameScreen extends StatelessWidget {
   final GameState game;
   final String playerId;
+  final GameSocketService socket;
 
-  const GameScreen({super.key, required this.game, required this.playerId});
+  const GameScreen({
+    super.key,
+    required this.game,
+    required this.playerId,
+    required this.socket,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return BlocProvider(
-      create: (_) => GameCubit(game),
+      create: (_) => GameCubit(game: game, playerId: playerId, socket: socket),
       child: Scaffold(
         body: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Opponent', style: theme.textTheme.titleMedium),
-                    Text(
-                      '10:00',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+          child: BlocBuilder<GameCubit, GameScreenState>(
+            builder: (context, state) {
+              final isWhite = playerId == state.game.white?.id;
+
+              final myPlayer = isWhite ? state.game.white : state.game.black;
+
+              final opponent = isWhite ? state.game.black : state.game.white;
+
+              final myTime = isWhite ? state.whiteTime : state.blackTime;
+
+              final opponentTime = isWhite ? state.blackTime : state.whiteTime;
+
+              final myTurn = isWhite
+                  ? state.game.active == ActiveColor.white
+                  : state.game.active == ActiveColor.black;
+
+              return Column(
+                children: [
+                  PlayerBar(
+                    name: opponent?.nickname ?? 'Opponent',
+                    time: opponentTime,
+                    isActive: !myTurn,
+                  ),
+
+                  const Spacer(),
+
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      ChessBoard(
+                        game: state.game,
+                        isWhite: isWhite,
+                        selectedSquare: state.selectedSquare,
+                        legalMoves: state.legalMoves,
+                        onSquareTap: (square) {
+                          context.read<GameCubit>().selectSquare(square);
+                        },
                       ),
-                    ),
-                  ],
-                ),
-              ),
 
-              const Spacer(),
+                      if (state.isPromotionPending)
+                        PromotionPicker(
+                          isWhite: isWhite,
+                          onSelected: (promotion) {
+                            context.read<GameCubit>().promote(promotion);
+                          },
+                        ),
+                    ],
+                  ),
 
-              BlocBuilder<GameCubit, GameScreenState>(
-                builder: (context, state) {
-                  return ChessBoard(
-                    game: state.game,
-                    selectedSquare: state.selectedSquare,
-                    legalMoves: state.legalMoves,
-                    onSquareTap: (square) {
-                      context.read<GameCubit>().selectSquare(square);
-                    },
-                  );
-                },
-              ),
+                  const Spacer(),
 
-              const Spacer(),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('You', style: theme.textTheme.titleMedium),
-                    Text(
-                      '10:00',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                  PlayerBar(
+                    name: myPlayer?.nickname ?? 'You',
+                    time: myTime,
+                    isActive: myTurn,
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
