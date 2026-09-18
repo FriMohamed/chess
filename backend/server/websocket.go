@@ -2,8 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -19,32 +17,112 @@ var upgrader = websocket.Upgrader{
 
 func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("gameID")
-	playerID := r.URL.Query().Get("playerId")
+	sessionID := r.URL.Query().Get("sessionId")
+
+	logger.Printf(
+		"[WS] connection requested game=%s session=%s",
+		gameID,
+		sessionID,
+	)
+
+	session := s.getSession(sessionID)
+	if session == nil {
+		logger.Printf(
+			"[WS] connection rejected game=%s session=%s reason=invalid_session",
+			gameID,
+			sessionID,
+		)
+
+		http.Error(w, "invalid session", http.StatusForbidden)
+		return
+	}
+
+	if session.GameID != gameID {
+		logger.Printf(
+			"[WS] connection rejected game=%s session=%s reason=session_game_mismatch",
+			gameID,
+			sessionID,
+		)
+
+		http.Error(w, "invalid session", http.StatusForbidden)
+		return
+	}
 
 	room := s.manager.GetRoom(gameID)
 	if room == nil {
+		logger.Printf(
+			"[WS] connection rejected game=%s session=%s reason=game_not_found",
+			gameID,
+			sessionID,
+		)
+
 		http.Error(w, "game not found", http.StatusNotFound)
 		return
 	}
 
+	playerID := session.PlayerID
+
 	player := room.Player(playerID)
 	if player == nil {
+		logger.Printf(
+			"[WS] connection rejected game=%s player=%s reason=player_not_found",
+			gameID,
+			playerID,
+		)
+
 		http.Error(w, "player not found in game", http.StatusForbidden)
 		return
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		logger.Printf(
+			"[WS] upgrade failed game=%s player=%s: %v",
+			gameID,
+			playerID,
+			err,
+		)
 		return
 	}
 
 	client := NewClient(player, conn)
 
-	s.addClient(client)
-	room.PlayerConnected(playerID)
+	oldClient := s.addClient(client)
 
-	if len(s.roomClients(room)) == 2 && room.Start() {
+	if oldClient != nil {
+		logger.Printf(
+			"[WS] replacing existing connection game=%s player=%s",
+			gameID,
+			playerID,
+		)
+
+		_ = oldClient.Close()
+	}
+
+	if !room.PlayerConnected(playerID) {
+		logger.Printf(
+			"[WS] connection rejected after upgrade game=%s player=%s reason=player_removed",
+			gameID,
+			playerID,
+		)
+
+		s.removeClient(client)
+		_ = client.Close()
+		return
+	}
+
+	cleanUpFn := func(broadcast bool) {
+		if broadcast {
+			s.broadcastState(room, MessageGameState)
+		}
+		s.manager.ScheduleRoomCleanup(room.Game.ID)
+	}
+
+	if room.TryStart(cleanUpFn) {
+		room.StartClockWatcher()
 		s.broadcastState(room, MessageGameStarted)
+	} else {
+		s.broadcastState(room, MessageGameState)
 	}
 
 	s.readClient(room, client)
@@ -52,20 +130,48 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) readClient(room *game.Room, client *Client) {
 	defer func() {
-		s.removeClient(client.Player.ID)
-		room.PlayerDisconnected(client.Player.ID)
-		client.Close()
+		if s.isCurrentClient(client) {
+			logger.Printf(
+				"[WS] active connection closed game=%s player=%s",
+				room.Game.ID,
+				client.Player.ID,
+			)
+
+			s.removeClient(client)
+			room.PlayerDisconnected(client.Player.ID)
+		} else {
+			logger.Printf(
+				"[WS] replaced connection closed game=%s player=%s",
+				room.Game.ID,
+				client.Player.ID,
+			)
+		}
+
+		_ = client.Close()
 	}()
 
 	for {
 		_, data, err := client.Conn.ReadMessage()
 		if err != nil {
+			logger.Printf(
+				"[WS] read failed game=%s player=%s: %v",
+				room.Game.ID,
+				client.Player.ID,
+				err,
+			)
 			return
 		}
 
 		var message Message
 
 		if err := json.Unmarshal(data, &message); err != nil {
+			logger.Printf(
+				"[WS] invalid message game=%s player=%s: %v",
+				room.Game.ID,
+				client.Player.ID,
+				err,
+			)
+
 			s.sendError(
 				client,
 				ErrorInvalidMessage,
@@ -78,167 +184,81 @@ func (s *Server) readClient(room *game.Room, client *Client) {
 	}
 }
 
-func (s *Server) handleMessage(
-	room *game.Room,
-	client *Client,
-	message Message,
-) {
-	switch message.Type {
-	case MessageMove:
-		s.handleMove(room, client, message)
-
-	default:
-		s.sendError(
-			client,
-			ErrorInvalidMessage,
-			"unknown message type",
-		)
-	}
-}
-
-func (s *Server) handleMove(
-	room *game.Room,
-	client *Client,
-	message Message,
-) {
-	var command MoveCommand
-
-	if err := json.Unmarshal(message.Data, &command); err != nil {
-		s.sendError(
-			client,
-			ErrorInvalidMessage,
-			"invalid move command",
-		)
-		return
-	}
-
-	notation := command.From + command.To + command.Promotion
-	err := room.Move(client.Player.ID, notation)
-
-	if err != nil {
-		s.sendGameError(client, err)
-		return
-	}
-
-	s.broadcastState(room, MessageGameState)
-}
-
-func (s *Server) sendError(
-	client *Client,
-	code ErrorCode,
-	message string,
-) {
-	data, err := json.Marshal(ErrorData{
-		Code:    code,
-		Message: message,
-	})
-	if err != nil {
-		return
-	}
-
-	_ = client.Send(Message{
-		Type: MessageError,
-		Data: data,
-	})
-}
-
-func (s *Server) addClient(client *Client) {
+func (s *Server) addClient(client *Client) *Client {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	oldClient := s.clients[client.Player.ID]
 
 	s.clients[client.Player.ID] = client
+
+	if oldClient != nil {
+		logger.Printf(
+			"[WS] client replaced player=%s",
+			client.Player.ID,
+		)
+	} else {
+		logger.Printf(
+			"[WS] client registered player=%s",
+			client.Player.ID,
+		)
+	}
+
+	return oldClient
 }
 
-func (s *Server) removeClient(playerID string) {
+func (s *Server) isCurrentClient(client *Client) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.clients[client.Player.ID] == client
+}
+
+func (s *Server) removeClient(client *Client) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	delete(s.clients, playerID)
+	current, ok := s.clients[client.Player.ID]
+
+	if !ok {
+		logger.Printf(
+			"[WS] client already removed player=%s",
+			client.Player.ID,
+		)
+		return
+	}
+
+	if current != client {
+		logger.Printf(
+			"[WS] client removal skipped player=%s reason=connection_replaced",
+			client.Player.ID,
+		)
+		return
+	}
+
+	delete(s.clients, client.Player.ID)
+
+	logger.Printf(
+		"[WS] client removed player=%s",
+		client.Player.ID,
+	)
 }
 
 func (s *Server) roomClients(room *game.Room) []*Client {
-	players := room.Players()
+	playerIDs := room.PlayerIDs()
 
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	clients := make([]*Client, 0, len(players))
+	clients := make([]*Client, 0, len(playerIDs))
 
-	for _, player := range players {
-		if player == nil {
-			continue
-		}
+	for _, playerID := range playerIDs {
+		client := s.clients[playerID]
 
-		if client := s.clients[player.ID]; client != nil {
+		if client != nil {
 			clients = append(clients, client)
 		}
 	}
 
 	return clients
-}
-
-func (s *Server) broadcastState(
-	room *game.Room,
-	messageType MessageType,
-) {
-	state := GameState{
-		GameID:    room.Game.ID,
-		White:     room.Game.White(),
-		Black:     room.Game.Black(),
-		FEN:       room.Game.Chess.FEN(),
-		WhiteTime: room.Game.Clock.TimeLeft[game.White].Milliseconds(),
-		BlackTime: room.Game.Clock.TimeLeft[game.Black].Milliseconds(),
-		Active:    room.Game.Clock.Active,
-
-		Status:    room.Game.Status,
-		Result:    room.Game.Result,
-		EndReason: room.Game.EndReason,
-		Check:     room.Game.Check,
-	}
-
-	data, err := json.Marshal(state)
-	if err != nil {
-		println("broadcast: failed to marshal state:", err.Error())
-		return
-	}
-
-	message := Message{
-		Type: messageType,
-		Data: data,
-	}
-
-	fmt.Printf("GAME STATE CHANGED:\n%+v\n", state)
-
-	clients := s.roomClients(room)
-
-	for _, client := range clients {
-		if err := client.Send(message); err != nil {
-			println("broadcast: send failed:", err.Error())
-		} else {
-			println("broadcast: sent to", client.Player.ID)
-		}
-	}
-}
-
-func (s *Server) sendGameError(client *Client, err error) {
-	switch {
-	case errors.Is(err, game.ErrGameNotStarted):
-		s.sendError(client, ErrorGameNotStarted, err.Error())
-
-	case errors.Is(err, game.ErrNotYourTurn):
-		s.sendError(client, ErrorNotYourTurn, err.Error())
-
-	case errors.Is(err, game.ErrInvalidMove):
-		s.sendError(client, ErrorInvalidMove, err.Error())
-
-	case errors.Is(err, game.ErrPlayerNotFound):
-		s.sendError(client, ErrorInvalidMessage, err.Error())
-
-	default:
-		s.sendError(
-			client,
-			ErrorInvalidMessage,
-			"game operation failed",
-		)
-	}
 }

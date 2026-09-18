@@ -26,14 +26,18 @@ func newGameClock() *GameClock {
 	}
 }
 
-func (c *GameClock) updateClock() {
+
+func (c *GameClock) updateElapsed() {
 	now := time.Now()
 
 	elapsed := now.Sub(c.LastUpdate)
 
 	c.TimeLeft[c.Active] -= elapsed
 	c.LastUpdate = now
-	c.switchClock()
+
+	if c.TimeLeft[c.Active] < 0 {
+		c.TimeLeft[c.Active] = 0
+	}
 }
 
 func (c *GameClock) switchClock() {
@@ -42,4 +46,10 @@ func (c *GameClock) switchClock() {
 	} else {
 		c.Active = White
 	}
+}
+
+
+func (c *GameClock) updateClock() {
+	c.updateElapsed()
+	c.switchClock()
 }

@@ -1,6 +1,12 @@
 package game
 
-import "sync"
+import (
+	"fmt"
+	"log"
+	"math/rand"
+	"sync"
+	"time"
+)
 
 type Manager struct {
 	mu    sync.RWMutex
@@ -14,25 +20,121 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) QuickGame(player *Player) *Room {
+	if player == nil {
+		return nil
+	}
+	
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	for _, room := range m.rooms {
+		if room.Type != QuickRoom {
+			continue
+		}
+
 		if room.AddPlayer(player) {
 			room.StartConnectionTimer(player.ID)
+
+			log.Printf(
+				"[ROOM] player joined game=%s player=%s type=quick",
+				room.Game.ID,
+				player.ID,
+			)
+
 			return room
 		}
 	}
 
 	game := NewGame(player)
-
-	room := NewRoom(game)
+	room := NewQuickRoom(game)
 
 	m.rooms[game.ID] = room
 
 	room.StartConnectionTimer(player.ID)
 
+	log.Printf(
+		"[ROOM] quick game created game=%s player=%s",
+		game.ID,
+		player.ID,
+	)
+
 	return room
+}
+
+func (m *Manager) CreatePrivateGame(player *Player) *Room {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	code := m.newPrivateCode()
+
+	game := NewGame(player)
+
+	room := NewPrivateRoom(game, code)
+
+	m.rooms[game.ID] = room
+
+	room.StartConnectionTimer(player.ID)
+	room.StartWaitingTimer(func() {
+		m.RemoveRoom(game.ID)
+	})
+
+	log.Printf(
+		"[ROOM] private game created game=%s code=%s player=%s",
+		game.ID,
+		code,
+		player.ID,
+	)
+
+	return room
+}
+
+func (m *Manager) JoinPrivateGame(code string, player *Player, logger *log.Logger) (*Room, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, room := range m.rooms {
+		if room.Type != PrivateRoom || room.Code != code {
+			continue
+		}
+
+		if !room.AddPlayer(player) {
+			return nil, false
+		}
+
+		room.CancelWaitingTimer()
+
+		room.StartConnectionTimer(player.ID)
+
+		logger.Printf(
+			"[ROOM] player joined private game=%s code=%s player=%s",
+			room.Game.ID,
+			code,
+			player.ID,
+		)
+
+		return room, true
+	}
+
+	return nil, false
+}
+
+func (m *Manager) newPrivateCode() string {
+	for {
+		code := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+		found := false
+
+		for _, room := range m.rooms {
+			if room.Type == PrivateRoom && room.Code == code {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return code
+		}
+	}
 }
 
 func (m *Manager) OpenGames() []*Game {
@@ -43,7 +145,7 @@ func (m *Manager) OpenGames() []*Game {
 
 	for _, room := range m.rooms {
 		// if room.IsOpen() {
-			games = append(games, room.Game)
+		games = append(games, room.Game)
 		// }
 	}
 
@@ -71,6 +173,30 @@ func (m *Manager) GetRoom(gameID string) *Room {
 	defer m.mu.RUnlock()
 
 	return m.rooms[gameID]
+}
+
+func (m *Manager) ScheduleRoomCleanup(gameID string) {
+	const cleanupDelay = 1 * time.Minute
+
+	log.Printf(
+		"[MANAGER] room cleanup scheduled game=%s delay=%s",
+		gameID,
+		cleanupDelay,
+	)
+
+	time.AfterFunc(cleanupDelay, func() {
+		log.Printf(
+			"[MANAGER] room cleanup started game=%s",
+			gameID,
+		)
+
+		m.RemoveRoom(gameID)
+
+		log.Printf(
+			"[MANAGER] room cleanup completed game=%s",
+			gameID,
+		)
+	})
 }
 
 func (m *Manager) RemoveRoom(gameID string) bool {

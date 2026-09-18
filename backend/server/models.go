@@ -6,13 +6,30 @@ import (
 	"chess-backend/game"
 )
 
-type quickGameRequest struct {
+type gameRequest struct {
 	Nickname string `json:"nickname"`
+}
+
+type joinPrivateGameRequest struct {
+	Nickname string `json:"nickname"`
+	Code     string `json:"code"`
 }
 
 type quickGameResponse struct {
 	GameID   string `json:"game_id"`
-	PlayerID string `json:"player_id"`
+	SessionID string `json:"session_id"`
+}
+
+type privateGameResponse struct {
+	GameID    string `json:"gameId"`
+	SessionID string `json:"sessionId"`
+	Code      string `json:"code"`
+}
+
+type Session struct {
+	ID       string
+	GameID   string
+	PlayerID string
 }
 
 type MessageType string
@@ -20,7 +37,14 @@ type MessageType string
 const (
 	MessageGameStarted MessageType = "game_started"
 	MessageGameState   MessageType = "game_state"
+
 	MessageMove        MessageType = "move"
+	MessageResign       MessageType = "resign"
+	MessageOfferDraw    MessageType = "offer_draw"
+	MessageRespondDraw  MessageType = "respond_draw"
+
+	MessageDrawOffered  MessageType = "draw_offered"
+	MessageDrawDeclined MessageType = "draw_declined"
 	MessageError       MessageType = "error"
 )
 
@@ -35,6 +59,14 @@ type MoveCommand struct {
 	Promotion string `json:"promotion,omitempty"`
 }
 
+type DrawOfferData struct {
+	PlayerID string `json:"player_id"`
+}
+
+type DrawResponseCommand struct {
+	Accepted bool `json:"accepted"`
+}
+
 type ErrorCode string
 
 const (
@@ -42,6 +74,10 @@ const (
 	ErrorGameNotStarted ErrorCode = "game_not_started"
 	ErrorNotYourTurn    ErrorCode = "not_your_turn"
 	ErrorInvalidMove    ErrorCode = "invalid_move"
+	ErrorPlayerNotFound    ErrorCode = "player_not_found"
+	ErrorDrawAlreadyOffered ErrorCode = "draw_already_offered"
+	ErrorNoDrawOffer        ErrorCode = "no_draw_offer"
+	ErrorInvalidDrawResponse ErrorCode = "invalid_draw_response"
 )
 
 type ErrorData struct {
