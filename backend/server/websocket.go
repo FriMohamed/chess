@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -19,7 +20,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("gameID")
 	sessionID := r.URL.Query().Get("sessionId")
 
-	logger.Printf(
+	log.Printf(
 		"[WS] connection requested game=%s session=%s",
 		gameID,
 		sessionID,
@@ -27,7 +28,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	session := s.getSession(sessionID)
 	if session == nil {
-		logger.Printf(
+		log.Printf(
 			"[WS] connection rejected game=%s session=%s reason=invalid_session",
 			gameID,
 			sessionID,
@@ -38,7 +39,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if session.GameID != gameID {
-		logger.Printf(
+		log.Printf(
 			"[WS] connection rejected game=%s session=%s reason=session_game_mismatch",
 			gameID,
 			sessionID,
@@ -50,7 +51,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	room := s.manager.GetRoom(gameID)
 	if room == nil {
-		logger.Printf(
+		log.Printf(
 			"[WS] connection rejected game=%s session=%s reason=game_not_found",
 			gameID,
 			sessionID,
@@ -64,7 +65,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	player := room.Player(playerID)
 	if player == nil {
-		logger.Printf(
+		log.Printf(
 			"[WS] connection rejected game=%s player=%s reason=player_not_found",
 			gameID,
 			playerID,
@@ -76,7 +77,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Printf(
+		log.Printf(
 			"[WS] upgrade failed game=%s player=%s: %v",
 			gameID,
 			playerID,
@@ -90,7 +91,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	oldClient := s.addClient(client)
 
 	if oldClient != nil {
-		logger.Printf(
+		log.Printf(
 			"[WS] replacing existing connection game=%s player=%s",
 			gameID,
 			playerID,
@@ -100,7 +101,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !room.PlayerConnected(playerID) {
-		logger.Printf(
+		log.Printf(
 			"[WS] connection rejected after upgrade game=%s player=%s reason=player_removed",
 			gameID,
 			playerID,
@@ -131,7 +132,7 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 func (s *Server) readClient(room *game.Room, client *Client) {
 	defer func() {
 		if s.isCurrentClient(client) {
-			logger.Printf(
+			log.Printf(
 				"[WS] active connection closed game=%s player=%s",
 				room.Game.ID,
 				client.Player.ID,
@@ -140,7 +141,7 @@ func (s *Server) readClient(room *game.Room, client *Client) {
 			s.removeClient(client)
 			room.PlayerDisconnected(client.Player.ID)
 		} else {
-			logger.Printf(
+			log.Printf(
 				"[WS] replaced connection closed game=%s player=%s",
 				room.Game.ID,
 				client.Player.ID,
@@ -153,7 +154,7 @@ func (s *Server) readClient(room *game.Room, client *Client) {
 	for {
 		_, data, err := client.Conn.ReadMessage()
 		if err != nil {
-			logger.Printf(
+			log.Printf(
 				"[WS] read failed game=%s player=%s: %v",
 				room.Game.ID,
 				client.Player.ID,
@@ -165,7 +166,7 @@ func (s *Server) readClient(room *game.Room, client *Client) {
 		var message Message
 
 		if err := json.Unmarshal(data, &message); err != nil {
-			logger.Printf(
+			log.Printf(
 				"[WS] invalid message game=%s player=%s: %v",
 				room.Game.ID,
 				client.Player.ID,
@@ -193,12 +194,12 @@ func (s *Server) addClient(client *Client) *Client {
 	s.clients[client.Player.ID] = client
 
 	if oldClient != nil {
-		logger.Printf(
+		log.Printf(
 			"[WS] client replaced player=%s",
 			client.Player.ID,
 		)
 	} else {
-		logger.Printf(
+		log.Printf(
 			"[WS] client registered player=%s",
 			client.Player.ID,
 		)
@@ -221,7 +222,7 @@ func (s *Server) removeClient(client *Client) {
 	current, ok := s.clients[client.Player.ID]
 
 	if !ok {
-		logger.Printf(
+		log.Printf(
 			"[WS] client already removed player=%s",
 			client.Player.ID,
 		)
@@ -229,7 +230,7 @@ func (s *Server) removeClient(client *Client) {
 	}
 
 	if current != client {
-		logger.Printf(
+		log.Printf(
 			"[WS] client removal skipped player=%s reason=connection_replaced",
 			client.Player.ID,
 		)
@@ -238,7 +239,7 @@ func (s *Server) removeClient(client *Client) {
 
 	delete(s.clients, client.Player.ID)
 
-	logger.Printf(
+	log.Printf(
 		"[WS] client removed player=%s",
 		client.Player.ID,
 	)

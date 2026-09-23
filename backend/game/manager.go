@@ -88,7 +88,7 @@ func (m *Manager) CreatePrivateGame(player *Player) *Room {
 	return room
 }
 
-func (m *Manager) JoinPrivateGame(code string, player *Player, logger *log.Logger) (*Room, bool) {
+func (m *Manager) JoinPrivateGame(code string, player *Player) (*Room, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -105,7 +105,7 @@ func (m *Manager) JoinPrivateGame(code string, player *Player, logger *log.Logge
 
 		room.StartConnectionTimer(player.ID)
 
-		logger.Printf(
+		log.Printf(
 			"[ROOM] player joined private game=%s code=%s player=%s",
 			room.Game.ID,
 			code,
@@ -153,22 +153,20 @@ func (m *Manager) OpenGames() []*Game {
 }
 
 func (m *Manager) RemovePlayer(gameID string, playerID string) bool {
-	m.mu.RLock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	room, exists := m.rooms[gameID]
-
-	m.mu.RUnlock()
-
 	if !exists {
 		return false
 	}
 
 	removed := room.QuitGame(playerID)
 
-    // Delete room if no players remain
-    if removed && room.IsEmpty() {
-        delete(m.rooms, gameID)
-    }
+
+	if room.IsEmpty() {
+		delete(m.rooms, gameID)
+	}
 
 	return removed
 }

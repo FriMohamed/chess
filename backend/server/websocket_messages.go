@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"log"
 
 	"chess-backend/game"
 )
@@ -17,7 +18,7 @@ func (s *Server) sendToPlayer(playerID string, message Message) {
 	}
 
 	if err := client.Send(message); err != nil {
-		logger.Printf(
+		log.Printf(
 			"[WS] failed to send message player=%s type=%s: %v",
 			playerID,
 			message.Type,
@@ -99,7 +100,7 @@ func (s *Server) broadcastState(room *game.Room, messageType MessageType) {
 
 	data, err := json.Marshal(state)
 	if err != nil {
-		logger.Printf("[ERROR] failed to marshal game state game=%s: %v", snapshot.ID, err)
+		log.Printf("[ERROR] failed to marshal game state game=%s: %v", snapshot.ID, err)
 		return
 	}
 
@@ -112,7 +113,7 @@ func (s *Server) broadcastState(room *game.Room, messageType MessageType) {
 
 	for _, client := range clients {
 		if err := client.Send(message); err != nil {
-			logger.Printf(
+			log.Printf(
 				"[ERROR] websocket send failed game=%s player=%s: %v",
 				snapshot.ID,
 				client.Player.ID,
