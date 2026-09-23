@@ -16,7 +16,7 @@ class ApiClient {
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('HTTP error: ${response.statusCode}');
+      throw Exception('HTTP ${response.statusCode}: ${response.body}');
     }
 
     final json = jsonDecode(response.body);
@@ -26,10 +26,6 @@ class ApiClient {
 
   static Future<void> delete(String endpoint) async {
     final response = await http.delete(Uri.parse('$baseUrl$endpoint'));
-
-    print('DELETE $endpoint');
-    print('Status: ${response.statusCode}');
-    print('Body: ${response.body}');
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('HTTP error: ${response.statusCode} - ${response.body}');

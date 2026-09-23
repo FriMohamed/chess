@@ -12,4 +12,5 @@ type GameSnapshot struct {
 	Result     GameResult
 	EndReason  EndReason
 	Check      bool
+	DrawOfferedBy string
 }

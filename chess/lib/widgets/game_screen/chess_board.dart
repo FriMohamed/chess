@@ -1,15 +1,17 @@
+import 'package:chess/chess/chess_rules.dart';
 import 'package:chess/widgets/game_screen/chess_square.dart';
 import 'package:flutter/material.dart';
 import 'package:chess/models/game_state.dart';
 
 class ChessBoard extends StatelessWidget {
+  final ChessRules _chessRules = ChessRules();
   final GameState game;
   final String? selectedSquare;
   final bool isWhite;
   final void Function(String) onSquareTap;
   final List<String> legalMoves;
 
-  const ChessBoard({
+  ChessBoard({
     super.key,
     required this.game,
     required this.isWhite,
@@ -21,6 +23,7 @@ class ChessBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final board = _parseFen(game.fen);
+    final checkedKingSquare = _chessRules.checkedKingSquare(game.fen);
 
     return AspectRatio(
       aspectRatio: 1,
@@ -48,6 +51,7 @@ class ChessBoard extends StatelessWidget {
             isLight: isLight,
             isSelected: selectedSquare == square,
             isLegalMove: isLegalMove,
+            isInCheck: checkedKingSquare == square,
             onTap: () => onSquareTap(square),
           );
         },

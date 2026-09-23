@@ -1,16 +1,15 @@
+import 'package:chess/models/game_session.dart';
+
 class QuickGameResponse {
-  final String gameId;
-  final String playerId;
+  final GameSession session;
 
   const QuickGameResponse({
-    required this.gameId,
-    required this.playerId,
+    required this.session,
   });
 
   factory QuickGameResponse.fromJson(Map<String, dynamic> json) {
     return QuickGameResponse(
-      gameId: json['game_id'] as String,
-      playerId: json['player_id'] as String,
+      session: GameSession.fromJson(json),
     );
   }
 }

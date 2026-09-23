@@ -41,7 +41,7 @@ type EndReason string
 const (
 	NoEndReason          EndReason = "none"
 	Checkmate            EndReason = "checkmate"
-	Stalemate             EndReason = "stalemate"
+	Stalemate            EndReason = "stalemate"
 	ThreefoldRepetition  EndReason = "threefold_repetition"
 	FivefoldRepetition   EndReason = "fivefold_repetition"
 	FiftyMoveRule        EndReason = "fifty_move_rule"
@@ -150,16 +150,17 @@ func (g *Game) Snapshot() GameSnapshot {
 	}
 
 	return GameSnapshot{
-		ID:        g.ID,
-		White:     white,
-		Black:     black,
-		FEN:       g.Chess.FEN(),
-		WhiteTime: whiteTime,
-		BlackTime: blackTime,
-		Active:    active,
-		Status:    g.Status,
-		Result:    g.Result,
-		EndReason: g.EndReason,
+		ID:            g.ID,
+		White:         white,
+		Black:         black,
+		FEN:           g.Chess.FEN(),
+		WhiteTime:     whiteTime,
+		BlackTime:     blackTime,
+		Active:        active,
+		Status:        g.Status,
+		Result:        g.Result,
+		EndReason:     g.EndReason,
+		DrawOfferedBy: g.drawOfferPlayerID,
 	}
 }
 
@@ -309,35 +310,34 @@ func (g *Game) OfferDraw(player *Player) error {
 	return nil
 }
 
-func (g *Game) RespondDraw(player *Player, accepted bool) (string, error) {
+func (g *Game) RespondDraw(player *Player, accepted bool) error {
 	if g.Status != Playing {
-		return "", ErrGameNotStarted
+		return ErrGameNotStarted
 	}
 
 	if player == nil || !g.IsFull() {
-		return "", ErrPlayerNotFound
+		return ErrPlayerNotFound
 	}
 
 	white := g.White()
 	black := g.Black()
 
 	if white == nil || black == nil {
-		return "", ErrPlayerNotFound
+		return ErrPlayerNotFound
 	}
 
 	if player.ID != white.ID && player.ID != black.ID {
-		return "", ErrPlayerNotFound
+		return ErrPlayerNotFound
 	}
 
 	if g.drawOfferPlayerID == "" {
-		return "", ErrNoDrawOffer
+		return ErrNoDrawOffer
 	}
 
+	// You cannot accept or decline your own draw offer
 	if g.drawOfferPlayerID == player.ID {
-		return "", ErrInvalidDrawResponse
+		return ErrInvalidDrawResponse
 	}
-
-	offererID := g.drawOfferPlayerID
 
 	if accepted {
 		g.Status = Finished
@@ -345,9 +345,10 @@ func (g *Game) RespondDraw(player *Player, accepted bool) (string, error) {
 		g.EndReason = DrawAgreement
 	}
 
+	// Always clear the draw offer regardless of accept/decline
 	g.drawOfferPlayerID = ""
 
-	return offererID, nil
+	return nil
 }
 
 func (g *Game) updateGameState() {

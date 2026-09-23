@@ -1,5 +1,7 @@
 import 'package:chess/models/game_state.dart';
 
+enum DrawOfferState { none, sent, received, declined }
+
 class GameScreenState {
   final GameState game;
 
@@ -12,6 +14,8 @@ class GameScreenState {
   final String? promotionFrom;
   final String? promotionTo;
 
+  final DrawOfferState drawOfferState;
+
   GameScreenState({
     required this.game,
     int? whiteTime,
@@ -20,7 +24,8 @@ class GameScreenState {
     this.legalMoves = const [],
     this.promotionFrom,
     this.promotionTo,
-  }): whiteTime = whiteTime ?? game.whiteTime,
+    this.drawOfferState = DrawOfferState.none,
+  }) : whiteTime = whiteTime ?? game.whiteTime,
        blackTime = blackTime ?? game.blackTime;
 
   bool get isPromotionPending => promotionFrom != null && promotionTo != null;

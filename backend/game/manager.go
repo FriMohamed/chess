@@ -165,6 +165,11 @@ func (m *Manager) RemovePlayer(gameID string, playerID string) bool {
 
 	removed := room.QuitGame(playerID)
 
+    // Delete room if no players remain
+    if removed && room.IsEmpty() {
+        delete(m.rooms, gameID)
+    }
+
 	return removed
 }
 

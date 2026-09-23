@@ -6,6 +6,7 @@ class ChessSquare extends StatelessWidget {
   final bool isLight;
   final bool isSelected;
   final bool isLegalMove;
+  final bool isInCheck;
 
   final void Function() onTap;
 
@@ -15,6 +16,7 @@ class ChessSquare extends StatelessWidget {
     required this.isLight,
     required this.isSelected,
     required this.isLegalMove,
+    required this.isInCheck,
     required this.onTap,
   });
 
@@ -23,7 +25,9 @@ class ChessSquare extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        color: isSelected
+        color: isInCheck
+            ? const Color(0xFFD94A4A)
+            : isSelected
             ? const Color.fromARGB(205, 255, 231, 46)
             : isLight
             ? const Color(0xFFF0D9B5)

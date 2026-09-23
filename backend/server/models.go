@@ -18,12 +18,14 @@ type joinPrivateGameRequest struct {
 type quickGameResponse struct {
 	GameID   string `json:"game_id"`
 	SessionID string `json:"session_id"`
+	PlayerID string `json:"player_id"`
 }
 
 type privateGameResponse struct {
-	GameID    string `json:"gameId"`
-	SessionID string `json:"sessionId"`
-	Code      string `json:"code"`
+    GameID    string `json:"game_id"`
+    SessionID string `json:"session_id"`
+    PlayerID  string `json:"player_id"`
+    Code      string `json:"code"`
 }
 
 type Session struct {
@@ -98,4 +100,5 @@ type GameState struct {
 	Result     game.GameResult  `json:"result"`
 	EndReason  game.EndReason   `json:"end_reason"`
 	Check      bool             `json:"check"`
+	DrawOfferedBy string           `json:"draw_offered_by"`
 }

@@ -76,70 +76,50 @@ func (s *Server) handleResign(
 }
 
 func (s *Server) handleOfferDraw(
-	room *game.Room,
-	client *Client,
+    room *game.Room,
+    client *Client,
 ) {
-	if err := room.OfferDraw(client.Player.ID); err != nil {
-		s.sendGameError(client, err)
-		return
-	}
+    if err := room.OfferDraw(client.Player.ID); err != nil {
+        s.sendGameError(client, err)
+        return
+    }
 
-	opponent := room.Opponent(client.Player.ID)
-	if opponent == nil {
-		return
-	}
-
-	data, err := json.Marshal(DrawOfferData{
-		PlayerID: client.Player.ID,
-	})
-	if err != nil {
-		return
-	}
-
-	s.sendToPlayer(
-		opponent.ID,
-		Message{
-			Type: MessageDrawOffered,
-			Data: data,
-		},
-	)
+    // Broadcast the updated state (containing draw_offered_by) to both players
+    s.broadcastState(room, MessageGameState)
 }
 
 func (s *Server) handleRespondDraw(
-	room *game.Room,
-	client *Client,
-	message Message,
+    room *game.Room,
+    client *Client,
+    message Message,
 ) {
-	var command DrawResponseCommand
+    var command DrawResponseCommand
 
-	if err := json.Unmarshal(message.Data, &command); err != nil {
-		s.sendError(
-			client,
-			ErrorInvalidMessage,
-			"invalid draw response",
-		)
-		return
-	}
+    if err := json.Unmarshal(message.Data, &command); err != nil {
+        s.sendError(
+            client,
+            ErrorInvalidMessage,
+            "invalid draw response",
+        )
+        return
+    }
 
-	offererID, err := room.RespondDraw(
-		client.Player.ID,
-		command.Accepted,
-	)
-	if err != nil {
-		s.sendGameError(client, err)
-		return
-	}
+    err := room.RespondDraw(
+        client.Player.ID,
+        command.Accepted,
+    )
+    if err != nil {
+        s.sendGameError(client, err)
+        return
+    }
 
-	if command.Accepted {
-		s.broadcastState(room, MessageGameState)
-		room.NotifyFinished(false)
-		return
-	}
+    // 1. Broadcast the state change immediately to both clients:
+    // - If accepted: Status = Finished, Result = Draw, EndReason = DrawAgreement, draw_offered_by = ""
+    // - If declined: Status = Playing, draw_offered_by = ""
+    s.broadcastState(room, MessageGameState)
 
-	s.sendToPlayer(
-		offererID,
-		Message{
-			Type: MessageDrawDeclined,
-		},
-	)
+    // 2. If accepted, trigger room completion tasks (stop timers, persist game outcome, etc.)
+    if command.Accepted {
+        room.NotifyFinished(false)
+    }
 }

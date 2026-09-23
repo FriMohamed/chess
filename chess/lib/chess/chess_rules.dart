@@ -11,10 +11,6 @@ class ChessRules {
       return [];
     }
 
-    if (piece.color != chess.turn) {
-      chess = chess.copyWith(turn: piece.color, epSquare: null) as Chess;
-    }
-
     return chess
         .legalMovesOf(square)
         .squares
@@ -35,5 +31,31 @@ class ChessRules {
     final promotionRank = chess.turn == Side.white ? 6 : 1;
 
     return fromSquare.rank == promotionRank;
+  }
+
+  bool isCheck(String fen) {
+    final chess = Chess.fromSetup(Setup.parseFen(fen));
+
+    return chess.isCheck;
+  }
+
+  String? checkedKingSquare(String fen) {
+    final chess = Chess.fromSetup(Setup.parseFen(fen));
+
+    if (!chess.isCheck) {
+      return null;
+    }
+
+    final kingSquares = chess.board.kings.intersect(chess.board.occupied);
+
+    for (final square in kingSquares.squares) {
+      final piece = chess.board.pieceAt(square);
+
+      if (piece?.color == chess.turn) {
+        return square.name;
+      }
+    }
+
+    return null;
   }
 }

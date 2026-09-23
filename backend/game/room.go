@@ -211,16 +211,16 @@ func (r *Room) OfferDraw(playerID string) error {
 	return r.Game.OfferDraw(player)
 }
 
-func (r *Room) RespondDraw(playerID string, accepted bool) (string, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (r *Room) RespondDraw(playerID string, accepted bool) error {
+    r.mu.Lock()
+    defer r.mu.Unlock()
 
-	player := r.Game.GetPlayer(playerID)
-	if player == nil {
-		return "", ErrPlayerNotFound
-	}
+    player := r.Game.GetPlayer(playerID)
+    if player == nil {
+        return ErrPlayerNotFound
+    }
 
-	return r.Game.RespondDraw(player, accepted)
+    return r.Game.RespondDraw(player, accepted)
 }
 
 func (r *Room) Snapshot() GameSnapshot {
@@ -452,6 +452,12 @@ func (r *Room) QuitGame(playerID string) bool {
 	}
 
 	return finished
+}
+
+func (r *Room) IsEmpty() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.Game.IsEmpty()
 }
 
 func (r *Room) StartClockWatcher() {

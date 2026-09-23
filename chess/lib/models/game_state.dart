@@ -16,6 +16,9 @@ enum EndReason {
   seventyFiveMoveRule,
   insufficientMaterial,
   resignation,
+  drawAgreement,
+  disconnect,
+  quit,
   timeout,
 }
 
@@ -35,7 +38,8 @@ class GameState {
   final GameStatus status;
   final GameResult result;
   final EndReason endReason;
-  final bool check;
+  final bool? check;
+  final String? drawOfferedBy;
 
   const GameState({
     required this.gameId,
@@ -48,7 +52,8 @@ class GameState {
     required this.status,
     required this.result,
     required this.endReason,
-    required this.check,
+    this.check,
+    this.drawOfferedBy,
   });
 
   factory GameState.fromJson(Map<String, dynamic> json) {
@@ -73,6 +78,7 @@ class GameState {
       endReason: _endReason(json['end_reason'] as String),
 
       check: json['check'] as bool,
+      drawOfferedBy: json['draw_offered_by'] as String?,
     );
   }
 
@@ -106,6 +112,9 @@ class GameState {
       'seventy_five_move_rule' => EndReason.seventyFiveMoveRule,
       'insufficient_material' => EndReason.insufficientMaterial,
       'resignation' => EndReason.resignation,
+      'draw_agreement' => EndReason.drawAgreement,
+      'disconnect' => EndReason.disconnect,
+      'quit' => EndReason.quit,
       'timeout' => EndReason.timeout,
       _ => EndReason.none,
     };

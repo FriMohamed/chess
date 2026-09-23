@@ -36,6 +36,7 @@ func (s *Server) quickGame(w http.ResponseWriter, r *http.Request) {
 	response := quickGameResponse{
 		GameID:    room.Game.ID,
 		SessionID: session.ID,
+		PlayerID: session.PlayerID,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -140,6 +141,7 @@ func (s *Server) createPrivateGame(w http.ResponseWriter, r *http.Request) {
 	response := privateGameResponse{
 		GameID:    room.Game.ID,
 		SessionID: session.ID,
+		PlayerID:  session.PlayerID,
 		Code:      room.Code,
 	}
 
@@ -208,6 +210,7 @@ func (s *Server) joinPrivateGame(w http.ResponseWriter, r *http.Request) {
 	response := privateGameResponse{
 		GameID:    room.Game.ID,
 		SessionID: session.ID,
+		PlayerID:  session.PlayerID,
 		Code:      room.Code,
 	}
 

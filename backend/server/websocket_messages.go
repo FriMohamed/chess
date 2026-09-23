@@ -92,6 +92,7 @@ func (s *Server) broadcastState(room *game.Room, messageType MessageType) {
 		Result:    snapshot.Result,
 		EndReason: snapshot.EndReason,
 		Check:     snapshot.Check,
+		DrawOfferedBy: snapshot.DrawOfferedBy,
 	}
 
 	

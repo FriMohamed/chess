@@ -1,3 +1,4 @@
+import 'package:chess/screens/game_waiting_screen.dart';
 import 'package:chess/widgets/custom_button.dart';
 import 'package:chess/widgets/player_name.dart';
 import 'package:flutter/material.dart';
@@ -6,11 +7,124 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   void _handleQuickGame(BuildContext context) {
-    Navigator.of(context).pushNamed('/quick-game');
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const GameWaitingScreen(mode: GameMode.public),
+      ),
+    );
   }
 
-  void _handlePlayFriend() {
-    debugPrint('Play friend pressed');
+  void _handlePlayFriend(BuildContext context) {
+    // No API call here.
+    //
+    // Home only lets the player choose between creating a private game
+    // or joining an existing one.
+    _showPrivateOptions(context);
+  }
+
+  void _showPrivateOptions(BuildContext homeContext) {
+    final colors = Theme.of(homeContext).colorScheme;
+
+    showModalBottomSheet(
+      context: homeContext,
+      backgroundColor: colors.surface,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ...
+                CustomButton(
+                  label: 'CREATE GAME',
+                  backgroundColor: colors.primary,
+                  textColor: colors.onPrimary,
+                  fontWeight: FontWeight.w800,
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+
+                    Navigator.of(homeContext).push(
+                      MaterialPageRoute(
+                        builder: (_) => const GameWaitingScreen(
+                          mode: GameMode.privateCreate,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 12),
+
+                CustomButton(
+                  label: 'JOIN GAME',
+                  backgroundColor: colors.surface,
+                  textColor: colors.onSurface,
+                  borderColor: colors.outline,
+                  fontWeight: FontWeight.w700,
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+
+                    _showJoinGameDialog(homeContext);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showJoinGameDialog(BuildContext homeContext) {
+    final controller = TextEditingController();
+
+    showDialog(
+      context: homeContext,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('JOIN GAME'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.characters,
+            decoration: const InputDecoration(
+              labelText: 'Game code',
+              hintText: 'Enter code',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('CANCEL'),
+            ),
+
+            FilledButton(
+              onPressed: () {
+                final code = controller.text.trim();
+
+                if (code.isEmpty) return;
+
+                Navigator.of(dialogContext).pop();
+
+                Navigator.of(homeContext).push(
+                  MaterialPageRoute(
+                    builder: (_) => GameWaitingScreen(
+                      mode: GameMode.privateJoin,
+                      code: code,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('JOIN'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -26,6 +140,7 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 32),
+
               Text(
                 '♔',
                 style: TextStyle(
@@ -73,7 +188,7 @@ class HomeScreen extends StatelessWidget {
                     textColor: colors.onSurface,
                     borderColor: colors.outline,
                     fontWeight: FontWeight.w700,
-                    onPressed: _handlePlayFriend,
+                    onPressed: () => _handlePlayFriend(context),
                   ),
                 ],
               ),
