@@ -20,43 +20,19 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("gameID")
 	sessionID := r.URL.Query().Get("sessionId")
 
-	log.Printf(
-		"[WS] connection requested game=%s session=%s",
-		gameID,
-		sessionID,
-	)
-
 	session := s.getSession(sessionID)
 	if session == nil {
-		log.Printf(
-			"[WS] connection rejected game=%s session=%s reason=invalid_session",
-			gameID,
-			sessionID,
-		)
-
 		http.Error(w, "invalid session", http.StatusForbidden)
 		return
 	}
 
 	if session.GameID != gameID {
-		log.Printf(
-			"[WS] connection rejected game=%s session=%s reason=session_game_mismatch",
-			gameID,
-			sessionID,
-		)
-
 		http.Error(w, "invalid session", http.StatusForbidden)
 		return
 	}
 
 	room := s.manager.GetRoom(gameID)
 	if room == nil {
-		log.Printf(
-			"[WS] connection rejected game=%s session=%s reason=game_not_found",
-			gameID,
-			sessionID,
-		)
-
 		http.Error(w, "game not found", http.StatusNotFound)
 		return
 	}
@@ -65,12 +41,6 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	player := room.Player(playerID)
 	if player == nil {
-		log.Printf(
-			"[WS] connection rejected game=%s player=%s reason=player_not_found",
-			gameID,
-			playerID,
-		)
-
 		http.Error(w, "player not found in game", http.StatusForbidden)
 		return
 	}
@@ -91,22 +61,10 @@ func (s *Server) gameWebSocket(w http.ResponseWriter, r *http.Request) {
 	oldClient := s.addClient(client)
 
 	if oldClient != nil {
-		log.Printf(
-			"[WS] replacing existing connection game=%s player=%s",
-			gameID,
-			playerID,
-		)
-
 		_ = oldClient.Close()
 	}
 
 	if !room.PlayerConnected(playerID) {
-		log.Printf(
-			"[WS] connection rejected after upgrade game=%s player=%s reason=player_removed",
-			gameID,
-			playerID,
-		)
-
 		s.removeClient(client)
 		_ = client.Close()
 		return

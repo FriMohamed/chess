@@ -26,7 +26,6 @@ func New(manager *game.Manager) *Server {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /games", s.openGames)
 	mux.HandleFunc("POST /games/quick", s.quickGame)
 
 	mux.HandleFunc("POST /games/private", s.createPrivateGame)

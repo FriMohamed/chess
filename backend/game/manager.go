@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -34,13 +33,6 @@ func (m *Manager) QuickGame(player *Player) *Room {
 
 		if room.AddPlayer(player) {
 			room.StartConnectionTimer(player.ID)
-
-			log.Printf(
-				"[ROOM] player joined game=%s player=%s type=quick",
-				room.Game.ID,
-				player.ID,
-			)
-
 			return room
 		}
 	}
@@ -51,12 +43,6 @@ func (m *Manager) QuickGame(player *Player) *Room {
 	m.rooms[game.ID] = room
 
 	room.StartConnectionTimer(player.ID)
-
-	log.Printf(
-		"[ROOM] quick game created game=%s player=%s",
-		game.ID,
-		player.ID,
-	)
 
 	return room
 }
@@ -78,13 +64,6 @@ func (m *Manager) CreatePrivateGame(player *Player) *Room {
 		m.RemoveRoom(game.ID)
 	})
 
-	log.Printf(
-		"[ROOM] private game created game=%s code=%s player=%s",
-		game.ID,
-		code,
-		player.ID,
-	)
-
 	return room
 }
 
@@ -104,13 +83,6 @@ func (m *Manager) JoinPrivateGame(code string, player *Player) (*Room, bool) {
 		room.CancelWaitingTimer()
 
 		room.StartConnectionTimer(player.ID)
-
-		log.Printf(
-			"[ROOM] player joined private game=%s code=%s player=%s",
-			room.Game.ID,
-			code,
-			player.ID,
-		)
 
 		return room, true
 	}
@@ -135,21 +107,6 @@ func (m *Manager) newPrivateCode() string {
 			return code
 		}
 	}
-}
-
-func (m *Manager) OpenGames() []*Game {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	games := make([]*Game, 0)
-
-	for _, room := range m.rooms {
-		// if room.IsOpen() {
-		games = append(games, room.Game)
-		// }
-	}
-
-	return games
 }
 
 func (m *Manager) RemovePlayer(gameID string, playerID string) bool {
@@ -181,24 +138,8 @@ func (m *Manager) GetRoom(gameID string) *Room {
 func (m *Manager) ScheduleRoomCleanup(gameID string) {
 	const cleanupDelay = 1 * time.Minute
 
-	log.Printf(
-		"[MANAGER] room cleanup scheduled game=%s delay=%s",
-		gameID,
-		cleanupDelay,
-	)
-
 	time.AfterFunc(cleanupDelay, func() {
-		log.Printf(
-			"[MANAGER] room cleanup started game=%s",
-			gameID,
-		)
-
 		m.RemoveRoom(gameID)
-
-		log.Printf(
-			"[MANAGER] room cleanup completed game=%s",
-			gameID,
-		)
 	})
 }
 

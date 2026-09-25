@@ -1,5 +1,5 @@
 name: chess
-description: "A new Flutter project."
+description: "A chees app for multiplayer"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -52,6 +52,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -69,30 +70,10 @@ flutter:
     - assets/pieces/black/
     - assets/pieces/white/
     - assets/sounds/
-
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/to/resolution-aware-images
-
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/to/asset-from-package
-
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
+    - assets/app_icon.jpeg
   
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/app_icon.jpeg"
+  min_sdk_android: 21 # Required for adaptive icons

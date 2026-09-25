@@ -17,9 +17,6 @@ class GameCubit extends Cubit<GameScreenState> {
   bool _blackLowTimeSoundPlayed = false;
   Timer? _clockTimer;
 
-  // REMOVED: _drawDeclinedTimer was removed because draw offers are no longer tracked via
-  // temporary local timers. Draw state is now driven directly by GameState snapshot updates.
-
   late final StreamSubscription<GameSocketMessage> _messageSubscription;
 
   GameCubit({
@@ -53,7 +50,9 @@ class GameCubit extends Cubit<GameScreenState> {
       if (state.whiteTime <= 0) return;
       final newTime = state.whiteTime - 1000;
 
-      if (newTime <= 10_000 && !_whiteLowTimeSoundPlayed && _playerId == state.game.white?.id) {
+      if (newTime <= 10_000 &&
+          !_whiteLowTimeSoundPlayed &&
+          _playerId == state.game.white?.id) {
         _whiteLowTimeSoundPlayed = true;
         _soundService.playLowTime();
       }
@@ -74,7 +73,9 @@ class GameCubit extends Cubit<GameScreenState> {
       if (state.blackTime <= 0) return;
       final newTime = state.blackTime - 1000;
 
-      if (newTime <= 10_000 && !_blackLowTimeSoundPlayed && _playerId == state.game.black?.id) {
+      if (newTime <= 10_000 &&
+          !_blackLowTimeSoundPlayed &&
+          _playerId == state.game.black?.id) {
         _blackLowTimeSoundPlayed = true;
         _soundService.playLowTime();
       }
@@ -315,18 +316,6 @@ class GameCubit extends Cubit<GameScreenState> {
   bool get _isMyTurn {
     final game = state.game;
 
-    if (game.white?.id == _playerId) {
-      return game.active == ActiveColor.white;
-    }
-
-    if (game.black?.id == _playerId) {
-      return game.active == ActiveColor.black;
-    }
-
-    return false;
-  }
-
-  bool _isMyTurnForGame(GameState game) {
     if (game.white?.id == _playerId) {
       return game.active == ActiveColor.white;
     }

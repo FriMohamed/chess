@@ -1,7 +1,6 @@
 package game
 
 import (
-	"log"
 	"sync"
 	"time"
 )
@@ -59,13 +58,6 @@ func (r *Room) StartWaitingTimer(onTimeout func()) {
 	defer r.mu.Unlock()
 
 	r.waitTimer = time.AfterFunc(privateWaitTimeout, onTimeout)
-
-	log.Printf(
-		"[ROOM] waiting timer started game=%s type=%s timeout=%s",
-		r.Game.ID,
-		r.Type,
-		privateWaitTimeout,
-	)
 }
 
 func (r *Room) CancelWaitingTimer() {
@@ -75,11 +67,6 @@ func (r *Room) CancelWaitingTimer() {
 	if r.waitTimer != nil {
 		r.waitTimer.Stop()
 		r.waitTimer = nil
-
-		log.Printf(
-			"[ROOM] waiting timer cancelled game=%s",
-			r.Game.ID,
-		)
 	}
 }
 
@@ -93,14 +80,6 @@ func (r *Room) AddPlayer(player *Player) bool {
 
 	added := r.Game.AddPlayer(player)
 
-	if added {
-		log.Printf(
-			"[ROOM] player added game=%s player=%s",
-			r.Game.ID,
-			player.ID,
-		)
-	}
-
 	return added
 }
 
@@ -110,18 +89,8 @@ func (r *Room) NotifyFinished(broadcast bool) {
 	r.mu.Unlock()
 
 	if callback == nil {
-		log.Printf(
-			"[ROOM] finish notification skipped game=%s reason=no_callback",
-			r.Game.ID,
-		)
 		return
 	}
-
-	log.Printf(
-		"[ROOM] game finished game=%s broadcast=%t",
-		r.Game.ID,
-		broadcast,
-	)
 
 	callback(broadcast)
 }
@@ -165,13 +134,6 @@ func (r *Room) TryStart(onFinished func(broadcast bool)) bool {
 
 	started := r.Game.Start()
 
-	if started {
-		log.Printf(
-			"[ROOM] game started game=%s",
-			r.Game.ID,
-		)
-	}
-
 	return started
 }
 
@@ -212,15 +174,15 @@ func (r *Room) OfferDraw(playerID string) error {
 }
 
 func (r *Room) RespondDraw(playerID string, accepted bool) error {
-    r.mu.Lock()
-    defer r.mu.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-    player := r.Game.GetPlayer(playerID)
-    if player == nil {
-        return ErrPlayerNotFound
-    }
+	player := r.Game.GetPlayer(playerID)
+	if player == nil {
+		return ErrPlayerNotFound
+	}
 
-    return r.Game.RespondDraw(player, accepted)
+	return r.Game.RespondDraw(player, accepted)
 }
 
 func (r *Room) Snapshot() GameSnapshot {
@@ -270,13 +232,6 @@ func (r *Room) StartConnectionTimer(playerID string) {
 	)
 
 	r.timers[playerID] = timer
-
-	log.Printf(
-		"[ROOM] connection timer started game=%s player=%s timeout=%s",
-		r.Game.ID,
-		playerID,
-		connectionTimeout,
-	)
 }
 
 func (r *Room) PlayerConnected(playerID string) bool {
@@ -292,19 +247,7 @@ func (r *Room) PlayerConnected(playerID string) bool {
 	if timer, ok := r.timers[playerID]; ok {
 		timer.Stop()
 		delete(r.timers, playerID)
-
-		log.Printf(
-			"[ROOM] connection timer cancelled game=%s player=%s",
-			r.Game.ID,
-			playerID,
-		)
 	}
-
-	log.Printf(
-		"[ROOM] player connected game=%s player=%s",
-		r.Game.ID,
-		playerID,
-	)
 
 	return true
 }
@@ -317,11 +260,6 @@ func (r *Room) PlayerDisconnected(playerID string) {
 
 	// A finished game no longer needs a reconnect timer.
 	if r.Game.Status == Finished {
-		log.Printf(
-			"[ROOM] player disconnected game=%s player=%s reason=game_finished",
-			r.Game.ID,
-			playerID,
-		)
 		return
 	}
 
@@ -339,13 +277,6 @@ func (r *Room) PlayerDisconnected(playerID string) {
 	)
 
 	r.timers[playerID] = timer
-
-	log.Printf(
-		"[ROOM] player disconnected game=%s player=%s timeout=%s",
-		r.Game.ID,
-		playerID,
-		connectionTimeout,
-	)
 }
 
 func (r *Room) connectionTimeout(playerID string, timer *time.Timer) {
@@ -360,22 +291,9 @@ func (r *Room) connectionTimeout(playerID string, timer *time.Timer) {
 	delete(r.timers, playerID)
 	delete(r.connected, playerID)
 
-	log.Printf(
-		"[ROOM] connection timeout game=%s player=%s",
-		r.Game.ID,
-		playerID,
-	)
-
 	// Game hasn't started yet.
 	if r.Game.Status == Waiting {
-		removed := r.Game.RemovePlayer(playerID)
-
-		log.Printf(
-			"[ROOM] player removed after connection timeout game=%s player=%s removed=%t",
-			r.Game.ID,
-			playerID,
-			removed,
-		)
+		r.Game.RemovePlayer(playerID)
 
 		r.mu.Unlock()
 		return
@@ -416,13 +334,6 @@ func (r *Room) QuitGame(playerID string) bool {
 		return false
 	}
 
-	log.Printf(
-		"[ROOM] player quit game=%s player=%s status=%s",
-		r.Game.ID,
-		playerID,
-		r.Game.Status,
-	)
-
 	// Game hasn't started.
 	if r.Game.Status == Waiting {
 		removed := r.Game.RemovePlayer(playerID)
@@ -462,10 +373,6 @@ func (r *Room) IsEmpty() bool {
 
 func (r *Room) StartClockWatcher() {
 	go func() {
-		log.Printf(
-			"[ROOM] clock watcher started game=%s",
-			r.Game.ID,
-		)
 
 		ticker := time.NewTicker(clockCheckInterval)
 		defer ticker.Stop()
@@ -475,12 +382,6 @@ func (r *Room) StartClockWatcher() {
 
 			if r.Game.Status != Playing {
 				r.mu.Unlock()
-
-				log.Printf(
-					"[ROOM] clock watcher stopped game=%s",
-					r.Game.ID,
-				)
-
 				return
 			}
 
@@ -489,11 +390,6 @@ func (r *Room) StartClockWatcher() {
 			r.mu.Unlock()
 
 			if finished {
-				log.Printf(
-					"[ROOM] game timeout game=%s",
-					r.Game.ID,
-				)
-
 				r.NotifyFinished(true)
 				return
 			}

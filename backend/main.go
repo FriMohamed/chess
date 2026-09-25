@@ -14,7 +14,6 @@ func main() {
 	srv := server.New(manager)
 
 	log.Println("server listening on :8080")
-
 	err := http.ListenAndServe(":8080", srv.Handler())
 	if err != nil {
 		log.Fatal(err)
