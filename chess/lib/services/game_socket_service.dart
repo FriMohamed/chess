@@ -46,7 +46,7 @@ class UnknownMessage extends GameSocketMessage {
 }
 
 class GameSocketService {
-  static const String baseUrl = 'ws://192.168.11.108:8080';
+  static const String baseUrl = 'ws://10.98.1.3:8080';
 
   static const List<Duration> _reconnectDelays = [
     Duration(seconds: 2),

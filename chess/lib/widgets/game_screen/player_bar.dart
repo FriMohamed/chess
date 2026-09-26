@@ -36,10 +36,8 @@ class PlayerBar extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          border: Border.all(
-            color: isActive ? _gold : Colors.transparent,
-            width: 1.5,
-          ),
+          // Subtle background shift when active for better contrast
+          color: isActive ? colors.surfaceContainerHighest : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -49,10 +47,14 @@ class PlayerBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Underline added directly to the name using standard TextDecoration
                   Text(
                     name,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
+                      decoration: isActive ? TextDecoration.underline : TextDecoration.none,
+                      decorationColor: _gold,
+                      decorationThickness: 2.0,
                     ),
                   ),
                   const SizedBox(height: 4),

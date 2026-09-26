@@ -70,10 +70,10 @@ flutter:
     - assets/pieces/black/
     - assets/pieces/white/
     - assets/sounds/
-    - assets/app_icon.jpeg
+    - assets/app_icon.png
   
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/app_icon.jpeg"
+  image_path: "assets/app_icon.png"
   min_sdk_android: 21 # Required for adaptive icons
