@@ -1,4 +1,4 @@
-import 'package:chess/models/game_state.dart';
+import 'package:chess_app/models/game_state.dart';
 
 enum DrawOfferState { none, sent, received, declined }
 

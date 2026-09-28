@@ -1,4 +1,4 @@
-import 'package:chess/models/game_state.dart';
+import 'package:chess_app/models/game_state.dart';
 import 'package:flutter/material.dart';
 
 class GameFinishedOverlay extends StatelessWidget {

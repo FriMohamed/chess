@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:chess/models/game_session.dart';
-import 'package:chess/models/game_state.dart';
-import 'package:chess/screens/game_screen.dart';
-import 'package:chess/services/api/game_api_service.dart';
-import 'package:chess/services/game_socket_service.dart';
-import 'package:chess/services/player_name_service.dart';
-import 'package:chess/widgets/confirm_modal.dart';
-import 'package:chess/widgets/error_overlay.dart';
-import 'package:chess/widgets/loading_dots.dart';
+import 'package:chess_app/models/game_session.dart';
+import 'package:chess_app/models/game_state.dart';
+import 'package:chess_app/screens/game_screen.dart';
+import 'package:chess_app/services/api/game_api_service.dart';
+import 'package:chess_app/services/game_socket_service.dart';
+import 'package:chess_app/services/player_name_service.dart';
+import 'package:chess_app/widgets/confirm_modal.dart';
+import 'package:chess_app/widgets/error_overlay.dart';
+import 'package:chess_app/widgets/loading_dots.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

@@ -1,61 +1,59 @@
-import 'package:dartchess/dartchess.dart';
+import 'package:chess/chess.dart' as chess;
 
 class ChessRules {
+  
   List<String> legalMoves(String fen, String from) {
-    var chess = Chess.fromSetup(Setup.parseFen(fen));
+    final game = chess.Chess.fromFEN(fen);
 
-    final square = Square.fromName(from);
-    final piece = chess.board.pieceAt(square);
+    final moves = game.generate_moves({'square': from});
 
-    if (piece == null) {
-      return [];
-    }
-
-    return chess
-        .legalMovesOf(square)
-        .squares
-        .map((square) => square.name)
-        .toList();
+    return moves.map((move) => move.toAlgebraic).toList();
   }
 
   bool isPromotionMove(String fen, String from) {
-    final setup = Setup.parseFen(fen);
-    final chess = Chess.fromSetup(setup);
+    final game = chess.Chess.fromFEN(fen);
 
-    final fromSquare = Square.fromName(from);
+    final piece = game.get(from);
 
-    if (!chess.board.pawns.has(fromSquare)) {
+    if (piece == null) {
       return false;
     }
 
-    final promotionRank = chess.turn == Side.white ? 6 : 1;
+    if (piece.type != chess.Chess.PAWN) {
+      return false;
+    }
 
-    return fromSquare.rank == promotionRank;
+    // White pawn promotes from rank 7.
+    // Black pawn promotes from rank 2.
+    final rank = from[1];
+
+    if (piece.color == chess.Chess.WHITE) {
+      return rank == '7';
+    }
+
+    return rank == '2';
   }
 
   bool isCheck(String fen) {
-    final chess = Chess.fromSetup(Setup.parseFen(fen));
+    final game = chess.Chess.fromFEN(fen);
 
-    return chess.isCheck;
+    return game.in_check;
   }
 
   String? checkedKingSquare(String fen) {
-    final chess = Chess.fromSetup(Setup.parseFen(fen));
+    final game = chess.Chess.fromFEN(fen);
 
-    if (!chess.isCheck) {
+    if (!game.in_check) {
       return null;
     }
 
-    final kingSquares = chess.board.kings.intersect(chess.board.occupied);
+    // The king of the side whose turn it is.
+    final kingSquare = game.kings[game.turn];
 
-    for (final square in kingSquares.squares) {
-      final piece = chess.board.pieceAt(square);
-
-      if (piece?.color == chess.turn) {
-        return square.name;
-      }
+    if (kingSquare == chess.Chess.EMPTY) {
+      return null;
     }
 
-    return null;
+    return chess.Chess.algebraic(kingSquare);
   }
 }

@@ -1,6 +1,6 @@
-import 'package:chess/screens/home_screen.dart';
-import 'package:chess/screens/game_waiting_screen.dart';
-import 'package:chess/theme/app_theme.dart';
+import 'package:chess_app/screens/home_screen.dart';
+import 'package:chess_app/screens/game_waiting_screen.dart';
+import 'package:chess_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 void main() {

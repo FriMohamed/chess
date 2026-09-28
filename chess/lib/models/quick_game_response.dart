@@ -1,4 +1,4 @@
-import 'package:chess/models/game_session.dart';
+import 'package:chess_app/models/game_session.dart';
 
 class QuickGameResponse {
   final GameSession session;

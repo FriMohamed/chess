@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:chess/models/game_session.dart';
+import 'package:chess_app/models/game_session.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../models/game_state.dart';
@@ -46,7 +46,7 @@ class UnknownMessage extends GameSocketMessage {
 }
 
 class GameSocketService {
-  static const String baseUrl = 'ws://10.98.1.3:8080';
+  static const String baseUrl = 'ws://localhost:8080';
 
   static const List<Duration> _reconnectDelays = [
     Duration(seconds: 2),

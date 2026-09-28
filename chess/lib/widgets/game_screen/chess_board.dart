@@ -1,7 +1,7 @@
-import 'package:chess/chess/chess_rules.dart';
-import 'package:chess/widgets/game_screen/chess_square.dart';
+import 'package:chess_app/chess/chess_rules.dart';
+import 'package:chess_app/widgets/game_screen/chess_square.dart';
 import 'package:flutter/material.dart';
-import 'package:chess/models/game_state.dart';
+import 'package:chess_app/models/game_state.dart';
 
 class ChessBoard extends StatelessWidget {
   final ChessRules _chessRules = ChessRules();

@@ -1,17 +1,17 @@
 import 'dart:async';
 
-import 'package:chess/cubits/game_cubit.dart';
-import 'package:chess/cubits/game_screen_state.dart';
-import 'package:chess/models/game_session.dart';
-import 'package:chess/models/game_state.dart';
-import 'package:chess/services/api/game_api_service.dart';
-import 'package:chess/services/game_socket_service.dart';
-import 'package:chess/widgets/confirm_modal.dart';
-import 'package:chess/widgets/game_screen/chess_board.dart';
-import 'package:chess/widgets/game_screen/game_finished_overlay.dart';
-import 'package:chess/widgets/game_screen/player_bar.dart';
-import 'package:chess/widgets/game_screen/promotion_picker.dart';
-import 'package:chess/widgets/loading_dots.dart';
+import 'package:chess_app/cubits/game_cubit.dart';
+import 'package:chess_app/cubits/game_screen_state.dart';
+import 'package:chess_app/models/game_session.dart';
+import 'package:chess_app/models/game_state.dart';
+import 'package:chess_app/services/api/game_api_service.dart';
+import 'package:chess_app/services/game_socket_service.dart';
+import 'package:chess_app/widgets/confirm_modal.dart';
+import 'package:chess_app/widgets/game_screen/chess_board.dart';
+import 'package:chess_app/widgets/game_screen/game_finished_overlay.dart';
+import 'package:chess_app/widgets/game_screen/player_bar.dart';
+import 'package:chess_app/widgets/game_screen/promotion_picker.dart';
+import 'package:chess_app/widgets/loading_dots.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

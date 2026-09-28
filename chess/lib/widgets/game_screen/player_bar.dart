@@ -1,4 +1,4 @@
-import 'package:chess/cubits/game_screen_state.dart';
+import 'package:chess_app/cubits/game_screen_state.dart';
 import 'package:flutter/material.dart';
 
 class PlayerBar extends StatelessWidget {
@@ -48,14 +48,23 @@ class PlayerBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Underline added directly to the name using standard TextDecoration
-                  Text(
-                    name,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      decoration: isActive ? TextDecoration.underline : TextDecoration.none,
-                      decorationColor: _gold,
-                      decorationThickness: 2.0,
-                    ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      if (isActive)
+                        Container(
+                          height: 2,
+                          width: 30, // or double.infinity
+                          color: _gold,
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   const SizedBox(height: 20),
@@ -82,10 +91,7 @@ class PlayerBar extends StatelessWidget {
             ],
 
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: isActive ? _gold : colors.surfaceContainer,
                 borderRadius: BorderRadius.circular(8),
@@ -95,9 +101,7 @@ class PlayerBar extends StatelessWidget {
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: isActive ? Colors.black : null,
                   fontWeight: FontWeight.bold,
-                  fontFeatures: const [
-                    FontFeature.tabularFigures(),
-                  ],
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ),

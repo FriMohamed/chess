@@ -1,6 +1,6 @@
-import 'package:chess/screens/game_waiting_screen.dart';
-import 'package:chess/widgets/custom_button.dart';
-import 'package:chess/widgets/player_name.dart';
+import 'package:chess_app/screens/game_waiting_screen.dart';
+import 'package:chess_app/widgets/custom_button.dart';
+import 'package:chess_app/widgets/player_name.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {

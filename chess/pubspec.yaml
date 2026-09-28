@@ -1,4 +1,4 @@
-name: chess
+name: chess_app
 description: "A chees app for multiplayer"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -35,7 +35,7 @@ dependencies:
   http: ^1.6.0
   web_socket_channel: ^3.0.3
   flutter_svg: ^2.3.0
-  dartchess: ^0.13.1
+  chess: ^0.8.1
   audioplayers: ^6.7.1
 
   # The following adds the Cupertino Icons font to your application.

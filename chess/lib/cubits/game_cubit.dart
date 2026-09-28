@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:chess/chess/chess_rules.dart';
-import 'package:chess/cubits/game_screen_state.dart';
-import 'package:chess/models/game_state.dart';
-import 'package:chess/services/game_socket_service.dart';
-import 'package:chess/services/game_sound_service.dart';
+import 'package:chess_app/chess/chess_rules.dart';
+import 'package:chess_app/cubits/game_screen_state.dart';
+import 'package:chess_app/models/game_state.dart';
+import 'package:chess_app/services/game_socket_service.dart';
+import 'package:chess_app/services/game_sound_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GameCubit extends Cubit<GameScreenState> {

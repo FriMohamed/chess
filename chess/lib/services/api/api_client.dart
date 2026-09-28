@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
-  static const String baseUrl = 'http://10.98.1.3:8080';
+  static const String baseUrl = 'http://localhost:8080';
 
   static Future<T> post<T>(
     String endpoint, {

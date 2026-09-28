@@ -1,4 +1,4 @@
-import 'package:chess/widgets/game_screen/chess_piece.dart';
+import 'package:chess_app/widgets/game_screen/chess_piece.dart';
 import 'package:flutter/material.dart';
 
 class ChessSquare extends StatelessWidget {

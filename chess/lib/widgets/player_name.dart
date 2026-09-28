@@ -1,4 +1,4 @@
-import 'package:chess/services/player_name_service.dart';
+import 'package:chess_app/services/player_name_service.dart';
 import 'package:flutter/material.dart';
 
 class PlayerName extends StatefulWidget {
